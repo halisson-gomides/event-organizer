@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Eventos{% endblock %}
+{% block content %}
+<h2>Eventos</h2>
+<div>
+  <button hx-get="/events/new" hx-target="#modal" hx-swap="innerHTML">Novo Evento</button>
+</div>
+<ul id="content">
+{% for ev in events %}
+  <li>
+    <strong>{{ ev.name }}</strong>
+    {% if ev.is_recurring %}<em>(recorrente)</em>{% else %}<em>(avulso)</em>{% endif %}
+    <a hx-get="/events/new" style="display:none"></a>
+  </li>
+{% else %}
+  <li>Nenhum evento cadastrado.</li>
+{% endfor %}
+</ul>
+
+<div id="modal"></div>
+{% endblock %}

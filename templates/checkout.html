@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Checkout{% endblock %}
+{% block content %}
+<h2>Checkout — {{ occurrence.start_at }} a {{ occurrence.end_at }}</h2>
+
+{% if checkout_ok %}
+  <div class="ok">Checkout realizado com sucesso.</div>
+{% endif %}
+
+{% if error %}
+  <div class="error">{{ error }}</div>
+{% endif %}
+
+<form hx-post="/occurrences/{{ occurrence.id }}/checkout" hx-target="this" hx-swap="outerHTML">
+  <label>Participante:
+    <select name="participant_id" required>
+      {% for p in participants %}
+        <option value="{{ p.id }}">{{ p.full_name }} ({{ p.birth_date }})</option>
+      {% endfor %}
+    </select>
+  </label><br>
+  <label>Quem está realizando o checkout:
+    <select name="checkout_by_participant_id" required>
+      {% for p in participants %}
+        <option value="{{ p.id }}">{{ p.full_name }} ({{ p.birth_date }})</option>
+      {% endfor %}
+    </select>
+  </label><br>
+  <label>Código (exigido para crianças): <input type="text" name="code"></label><br>
+  <button type="submit">Checkout</button>
+</form>
+{% endblock %}

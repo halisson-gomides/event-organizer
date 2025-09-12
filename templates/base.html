@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Gerenciador de Eventos{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <link rel="icon" href="/static/img/calendar-event-thumbnail.ico" type="image/x-icon">
+</head>
+<body>
+<header>
+  <img src="/static/img/calendar-event-thumbnail.png" width="90px" height="90px"/>
+  <h1>Gerenciador de Eventos</h1>
+  <nav>
+    📅<a href="/events">Eventos</a>|
+    👥<a href="/participants">Participantes</a>
+  </nav>
+</header>
+<main>
+  {% block content %}{% endblock %}
+</main>
+<footer>
+  <small>&copy; {{  now().year if now else "" }}</small>
+</footer>
+</body>
+</html>

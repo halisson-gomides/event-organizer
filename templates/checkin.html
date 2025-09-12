@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Check-in{% endblock %}
+{% block content %}
+<h2>Check-in — {{ occurrence.start_at }} a {{ occurrence.end_at }}</h2>
+
+{% if checkin_ok %}
+  <div class="ok">Check-in realizado com sucesso.</div>
+  {% if code %}
+    <div class="code">
+      Código da criança (apresente no checkout): <strong>{{ code }}</strong>
+      <p><em>Guarde este código. Por segurança, não ficará visível novamente.</em></p>
+    </div>
+  {% endif %}
+{% endif %}
+
+{% if error %}
+  <div class="error">{{ error }}</div>
+{% endif %}
+
+<form hx-post="/occurrences/{{ occurrence.id }}/checkin" hx-target="this" hx-swap="outerHTML">
+  <label>Participante:
+    <select name="participant_id" required>
+      {% for p in participants %}
+        <option value="{{ p.id }}">{{ p.full_name }} ({{ p.birth_date }})</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit">Check-in</button>
+</form>
+{% endblock %}

@@ -1,0 +1,30 @@
+<div class="modal">
+  <h3>Novo Evento</h3>
+  <form hx-post="/events" hx-target="#content" hx-swap="innerHTML">
+    <label>Nome: <input type="text" name="name" required></label><br>
+    <label>Descrição: <input type="text" name="description"></label><br>
+    <label>É recorrente?
+      <input type="checkbox" name="is_recurring" value="true" id="is_recurring" onchange="toggleRecurrence(this)">
+    </label>
+
+    <div id="oneoff">
+      <label>Início: <input type="datetime-local" name="single_start"></label><br>
+      <label>Fim: <input type="datetime-local" name="single_end"></label><br>
+    </div>
+
+    <div id="recurrence" style="display:none">
+      <label>Data início: <input type="date" name="recurrence_start_date"></label><br>
+      <label>Data fim: <input type="date" name="recurrence_end_date"></label><br>
+      <label>Dias da semana (0=Seg...6=Dom): <input type="text" name="recurrence_rule.weekdays" placeholder="6 para Dom, 0 para Seg, ex: 6"></label><br>
+      <label>Janelas de horário (HH:MM-HH:MM, separadas por vírgula): <input type="text" name="recurrence_rule.time_windows" placeholder="10:00-12:00,18:00-20:00"></label><br>
+    </div>
+
+    <button type="submit">Salvar</button>
+  </form>
+</div>
+<script>
+function toggleRecurrence(cb) {
+  document.getElementById('recurrence').style.display = cb.checked ? 'block' : 'none';
+  document.getElementById('oneoff').style.display = cb.checked ? 'none' : 'block';
+}
+</script>

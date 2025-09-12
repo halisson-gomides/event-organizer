@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Participantes{% endblock %}
+{% block content %}
+<h2>Participantes</h2>
+<div>
+  <button hx-get="/participants/new" hx-target="#modal" hx-swap="innerHTML">Novo Participante</button>
+</div>
+<ul>
+{% for p in participants %}
+  <li>{{ p.full_name }} — nasc.: {{ p.birth_date }} {% if p.guardian_id %}(Resp.: {{ p.guardian_id }}){% endif %}</li>
+{% else %}
+  <li>Nenhum participante cadastrado.</li>
+{% endfor %}
+</ul>
+<div id="modal"></div>
+{% endblock %}

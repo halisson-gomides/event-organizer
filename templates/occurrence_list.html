@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Ocorrências de {{ event.name }}</h2>
+<ul>
+  {% for occ in occurrences %}
+    <li>
+      {{ occ.start_at }} - {{ occ.end_at }}
+      | <a href="/occurrences/{{ occ.id }}/checkin">Check-in</a>
+      | <a href="/occurrences/{{ occ.id }}/checkout">Checkout</a>
+    </li>
+  {% else %}
+    <li>Nenhuma ocorrência gerada.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

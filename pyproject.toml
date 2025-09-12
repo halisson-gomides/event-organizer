@@ -1,0 +1,14 @@
+[project]
+name = "events-organizer"
+version = "0.1.0"
+description = "Gerenciador de Eventos"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "advanced-alchemy[cli]>=1.6.2",
+    "asyncpg>=0.30.0",
+    "litestar[standard]>=2.17.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-dotenv>=1.1.1",
+    "uuid-utils>=0.11.0",
+]

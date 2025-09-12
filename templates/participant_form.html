@@ -1,0 +1,11 @@
+<div class="modal">
+  <h3>Novo Participante</h3>
+  <form hx-post="/participants" hx-target="#content" hx-swap="innerHTML">
+    <label>Nome completo: <input type="text" name="full_name" required></label><br>
+    <label>Data de nascimento: <input type="date" name="birth_date" required></label><br>
+    <label>Telefone: <input type="tel" name="phone" pattern="[0-9]{2} [0-9]{4}-[0-9]{4}" required placeholder="(99) 9999-9999"></label><br>
+    <label>Observações (opcional): <textarea name="observations" rows="3"></textarea></label><br>
+    <label>ID do responsável (opcional): <input type="number" name="guardian_id"></label><br>
+    <button type="submit">Salvar</button>
+  </form>
+</div>
