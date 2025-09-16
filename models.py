@@ -50,7 +50,7 @@ class EventModel(base.DefaultBase):
     # }
     recurrence_rule: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
 
-    occurrences: Mapped[List["EventOccurrenceModel"]] = relationship(back_populates="event", cascade="all, delete-orphan")
+    occurrences: Mapped[List["EventOccurrenceModel"]] = relationship(back_populates="event", cascade="all, delete-orphan", lazy="selectin")
 
 
 class EventOccurrenceModel(base.DefaultBase):
@@ -61,8 +61,8 @@ class EventOccurrenceModel(base.DefaultBase):
     start_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    event: Mapped[EventModel] = relationship(back_populates="occurrences")
-    attendances: Mapped[List["AttendanceModel"]] = relationship(back_populates="occurrence", cascade="all, delete-orphan")
+    event: Mapped[EventModel] = relationship(back_populates="occurrences", lazy="joined", innerjoin=True, viewonly=True)
+    attendances: Mapped[List["AttendanceModel"]] = relationship(back_populates="occurrence", cascade="all, delete-orphan", lazy="selectin")
 
     __table_args__ = (
         UniqueConstraint("event_id", "start_at", "end_at", name="uq_occurrence_unique_window"),
@@ -90,7 +90,7 @@ class AttendanceModel(base.DefaultBase):
 
     participant: Mapped[ParticipantModel] = relationship(foreign_keys=[participant_id])
     checkout_by_participant: Mapped[Optional[ParticipantModel]] = relationship(foreign_keys=[checkout_by_participant_id])
-    occurrence: Mapped[EventOccurrenceModel] = relationship(back_populates="attendances")
+    occurrence: Mapped[EventOccurrenceModel] = relationship(back_populates="attendances", lazy="joined", innerjoin=True, viewonly=True)
 
     __table_args__ = (
         UniqueConstraint("occurrence_id", "participant_id", name="uq_attendance_once"),
@@ -119,7 +119,7 @@ class UserModel(base.DefaultBase):
     profile: Mapped[str] = mapped_column(String(20), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default=text('false'))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
 
     __table_args__ = (
         UniqueConstraint("username", name="uq_users_username"),

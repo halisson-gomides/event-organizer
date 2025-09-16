@@ -6,6 +6,13 @@ from config import settings
 from database import alchemy_plugin, alchemy_config
 from models import UserSessionModel
 from controllers.user_controller import UserController
+from controllers.event_controller import EventController
+from controllers.participant_controller import ParticipantController
+# import logging
+
+# # Configure logging
+# logging.basicConfig(level=logging.DEBUG)
+# logger = logging.getLogger(__name__)
 
 # Session configuration
 session_config = ServerSideSessionConfig(
@@ -23,7 +30,8 @@ session_backend = SQLAlchemyAsyncSessionBackend(
 
 # Application
 app = Litestar(
-    route_handlers=[UserController],
+    route_handlers=[UserController, EventController, ParticipantController],
     plugins=[alchemy_plugin],
     middleware=[session_config.middleware],
+    debug=True,  # Enable debug mode
 )

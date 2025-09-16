@@ -17,7 +17,7 @@ class UserController(Controller):
         filters={"pagination_type": "limit_offset", "id_filter": int, "search": "email", "search_ignore_case": True},
     )
 
-    @get(path="/", response_model=service.OffsetPagination[UserRead])
+    @get(path="/users", response_model=service.OffsetPagination[UserRead])
     async def list_users(
         self,
         users_service: UserService,
@@ -58,11 +58,11 @@ class UserController(Controller):
         self,
         users_service: UserService,
         data: UserUpdate,
-        author_id: int = Parameter(
+        user_id: int = Parameter(
             title="User ID",
             description="The user to update.",
         ),
     ) -> UserRead:
         """Update an user."""
-        obj = await users_service.update(data, item_id=author_id, auto_commit=True)
+        obj = await users_service.update(data, item_id=user_id, auto_commit=True)
         return users_service.to_schema(obj, schema_type=UserRead)
