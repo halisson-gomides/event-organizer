@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from litestar import Controller, get, post, patch, delete
-from litestar.params import Dependency, Parameter
+from litestar.params import Dependency, Parameter, Body
 from advanced_alchemy.extensions.litestar import filters, providers, service
 from services.participant_service import ParticipantService
 from schemas import ParticipantRead, ParticipantCreate, ParticipantUpdate
@@ -34,7 +34,7 @@ class ParticipantController(Controller):
     async def create_participant(
         self,
         participants_service: ParticipantService,
-        data: ParticipantCreate,
+        data: Annotated[ParticipantCreate, Body()],
     ) -> ParticipantRead:
         """Create a new participant."""
         obj = await participants_service.create(data)
@@ -59,7 +59,7 @@ class ParticipantController(Controller):
     async def update_participant(
         self,
         participants_service: ParticipantService,
-        data: ParticipantUpdate,
+        data: Annotated[ParticipantUpdate, Body()],
         participant_id: int = Parameter(
             title="Participant ID",
             description="The participant to update.",

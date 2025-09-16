@@ -17,6 +17,19 @@
     👥<a href="/participants">Participantes</a>
   </nav>
 </header>
+
+<!-- Flash Messages -->
+{% if get_flashed_messages %}
+<div id="flash-messages">
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="flash-message {{ category }}">
+      {{ message }}
+      <button onclick="this.parentElement.remove()" style="float: right; background: none; border: none; font-size: 1.2em; cursor: pointer;">&times;</button>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <main>
   {% block content %}{% endblock %}
 </main>

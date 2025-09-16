@@ -79,6 +79,9 @@ class EventCreate(BaseSchema):
     recurrence_rule: dict[str, list[str]] = {}
     occurrences: list[EventOccurrenceRead] = []
 
+    def to_dict(self):
+        return {f: getattr(self, f) for f in self.__struct_fields__}
+
 
 class EventUpdate(BaseSchema):
     name: str

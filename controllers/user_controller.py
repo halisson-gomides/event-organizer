@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from litestar import Controller, get, post, patch, delete
-from litestar.params import Dependency, Parameter
+from litestar.params import Dependency, Parameter, Body
 from advanced_alchemy.extensions.litestar import filters, providers, service
 from services.user_service import UserService
 from schemas import UserRead, UserCreate, UserUpdate
@@ -32,7 +32,7 @@ class UserController(Controller):
     async def create_user(
         self,
         users_service: UserService,
-        data: UserCreate,
+        data: Annotated[UserCreate, Body()],
     ) -> UserRead:
         """Create a new user."""
         obj = await users_service.create(data)
@@ -57,7 +57,7 @@ class UserController(Controller):
     async def update_user(
         self,
         users_service: UserService,
-        data: UserUpdate,
+        data: Annotated[UserUpdate, Body()],
         user_id: int = Parameter(
             title="User ID",
             description="The user to update.",
