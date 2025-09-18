@@ -57,21 +57,21 @@ A modern web application for organizing and managing presential events, built wi
    ```bash
    uv run python init_db.py
    ```
-or
+&nbsp;&nbsp;or
 
-> **Run database migrations**
+ **Run database migrations**
    ```bash
    alchemy --config app.alchemy_config init
    litestar database make-migrations
    litestar database upgrade
    ```
 
-7. **Start the application**
+6. **Start the application**
    ```bash
    uv run uvicorn app:app --reload
    ```
 
-8. **Access the application**
+7. **Access the application**
    - Open http://localhost:8000
    - Login with: `admin` / `admin123`
 
@@ -111,40 +111,6 @@ If you prefer using VS Code with Dev Containers:
 - **Authentication**: Session-based login system
 - **Roles**: Admin, Organizer, Volunteer profiles
 
-## 🏗️ Project Structure
-
-```
-events-organizer/
-├── controllers/          # HTTP route handlers
-│   ├── auth_controller.py
-│   ├── event_controller.py
-│   ├── occurrence_controller.py
-│   ├── participant_controller.py
-│   └── user_controller.py
-├── services/            # Business logic layer
-│   ├── attendance_service.py
-│   ├── event_service.py
-│   ├── occurrence_service.py
-│   ├── participant_service.py
-│   └── user_service.py
-├── templates/           # Jinja2 HTML templates
-│   ├── base.html
-│   ├── event_*.html
-│   ├── participant_*.html
-│   ├── checkin.html
-│   ├── checkout.html
-│   ├── login.html
-│   └── register.html
-├── static/             # CSS, JS, images
-├── migrations/         # Alembic database migrations
-├── models.py          # SQLAlchemy data models
-├── schemas.py         # msgspec validation schemas
-├── database.py        # Database configuration
-├── config.py          # Application settings
-├── middleware.py      # Custom middleware
-├── app.py            # Main application entry point
-└── init_db.py        # Database initialization script
-```
 
 ## 🔧 Configuration
 
@@ -168,64 +134,6 @@ DEBUG=true
 ```bash
 uv run pytest
 ```
-
-### Database Migrations
-
-Create a new migration:
-```bash
-uv run alembic revision --autogenerate -m "Description"
-```
-
-Apply migrations:
-```bash
-uv run alembic upgrade head
-```
-
-### Code Formatting
-
-```bash
-uv run black .
-uv run ruff check .
-```
-
-## 📝 API Endpoints
-
-### Authentication
-- `GET /auth/login` - Login form
-- `POST /auth/login` - Process login
-- `GET /auth/register` - Registration form  
-- `POST /auth/register` - Process registration
-- `POST /auth/logout` - Logout
-
-### Events
-- `GET /events` - List events
-- `GET /events/new` - New event form
-- `POST /events` - Create event
-- `GET /events/{id}/edit` - Edit event form
-- `POST /events/{id}` - Update event
-- `DELETE /events/{id}` - Delete event
-
-### Participants
-- `GET /participants` - List participants
-- `GET /participants/new` - New participant form
-- `POST /participants` - Create participant
-- `GET /participants/{id}/edit` - Edit participant form
-- `POST /participants/{id}` - Update participant
-- `DELETE /participants/{id}` - Delete participant
-
-### Check-in/Check-out
-- `GET /occurrences/{id}/checkin` - Check-in form
-- `POST /occurrences/{id}/checkin` - Process check-in
-- `GET /occurrences/{id}/checkout` - Check-out form
-- `POST /occurrences/{id}/checkout` - Process check-out
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
 
 ## 📄 License
 
