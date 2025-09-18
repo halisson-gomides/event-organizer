@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+
+<div class="auth-container">
+  <div class="auth-form">
+    <h2>🔐 Login</h2>
+    
+    <form hx-post="/auth/login" hx-target="body" hx-swap="outerHTML">
+      <div class="form-group">
+        <label for="username">Usuário</label>
+        <input type="text" 
+               id="username" 
+               name="username" 
+               required 
+               maxlength="50"
+               placeholder="Digite seu usuário">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Senha</label>
+        <input type="password" 
+               id="password" 
+               name="password" 
+               required 
+               placeholder="Digite sua senha">
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">
+          🚪 Entrar
+        </button>
+      </div>
+    </form>
+
+    <div class="auth-links">
+      <p>Não tem uma conta? <a href="/auth/register" hx-get="/auth/register" hx-target="body" hx-swap="outerHTML">Registre-se</a></p>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

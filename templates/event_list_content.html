@@ -1,51 +1,52 @@
 {% if has_events %}
-<div class="event-grid">
+<div class="list-grid">
   {% for event in events %}
-  <div class="event-card">
-    <h3>{{ event.name }}</h3>
-    
-    <div class="event-type {{ 'recurring' if event.is_recurring else 'single' }}">
-      {% if event.is_recurring %}
-        🔄 Recorrente
-      {% else %}
-        📅 Evento Único
+  <div class="list-card">
+    <div class="list-info">
+      <h3>{{ event.name }}</h3>
+      
+      <div class="list-type {{ 'recurring' if event.is_recurring else 'single' }}">
+        {% if event.is_recurring %}
+          🔄 Recorrente
+        {% else %}
+          📅 Evento Único
+        {% endif %}
+      </div>
+      
+      {% if event.description %}
+      <div class="list-description">
+        {{ event.description }}
+      </div>
       {% endif %}
+      
+      <div class="list-details">
+        {% if event.is_recurring %}
+          {% if event.recurrence_start_date and event.recurrence_end_date %}
+          <div><strong>Período:</strong> {{ event.recurrence_start_date.strftime('%d/%m/%Y') }} até {{ event.recurrence_end_date.strftime('%d/%m/%Y') }}</div>
+          {% endif %}
+          {% if event.recurrence_rule and event.recurrence_rule.weekdays %}
+          <div><strong>Dias da semana:</strong> 
+            {% for day in event.recurrence_rule.weekdays %}
+              {% if day == '0' %}Seg{% elif day == '1' %}Ter{% elif day == '2' %}Qua{% elif day == '3' %}Qui{% elif day == '4' %}Sex{% elif day == '5' %}Sáb{% elif day == '6' %}Dom{% endif %}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+          </div>
+          {% endif %}
+          {% if event.recurrence_rule and event.recurrence_rule.time_windows %}
+          <div><strong>Horários:</strong> {{ event.recurrence_rule.time_windows | join(', ') }}</div>
+          {% endif %}
+        {% else %}
+          {% if event.single_start %}
+          <div><strong>Início:</strong> {{ event.single_start.strftime('%d/%m/%Y às %H:%M') }}</div>
+          {% endif %}
+          {% if event.single_end %}
+          <div><strong>Fim:</strong> {{ event.single_end.strftime('%d/%m/%Y às %H:%M') }}</div>
+          {% endif %}
+        {% endif %}
+      </div>
     </div>
-    
-    {% if event.description %}
-    <div class="event-description">
-      {{ event.description }}
-    </div>
-    {% endif %}
-    
-    <div class="event-details">
-      {% if event.is_recurring %}
-        {% if event.recurrence_start_date and event.recurrence_end_date %}
-        <div><strong>Período:</strong> {{ event.recurrence_start_date.strftime('%d/%m/%Y') }} até {{ event.recurrence_end_date.strftime('%d/%m/%Y') }}</div>
-        {% endif %}
-        {% if event.recurrence_rule and event.recurrence_rule.weekdays %}
-        <div><strong>Dias da semana:</strong> 
-          {% for day in event.recurrence_rule.weekdays %}
-            {% if day == '0' %}Seg{% elif day == '1' %}Ter{% elif day == '2' %}Qua{% elif day == '3' %}Qui{% elif day == '4' %}Sex{% elif day == '5' %}Sáb{% elif day == '6' %}Dom{% endif %}{% if not loop.last %}, {% endif %}
-          {% endfor %}
-        </div>
-        {% endif %}
-        {% if event.recurrence_rule and event.recurrence_rule.time_windows %}
-        <div><strong>Horários:</strong> {{ event.recurrence_rule.time_windows | join(', ') }}</div>
-        {% endif %}
-      {% else %}
-        {% if event.single_start %}
-        <div><strong>Início:</strong> {{ event.single_start.strftime('%d/%m/%Y às %H:%M') }}</div>
-        {% endif %}
-        {% if event.single_end %}
-        <div><strong>Fim:</strong> {{ event.single_end.strftime('%d/%m/%Y às %H:%M') }}</div>
-        {% endif %}
-      {% endif %}
-    </div>
-    
-    <div class="event-actions">
+    <div class="list-actions">
       <button class="btn-small btn-edit" 
-              hx-get="/events/{{ event.id }}" 
+              hx-get="/events/{{ event.id }}/edit" 
               hx-target="#content" 
               hx-swap="innerHTML">
         ✏️ Editar

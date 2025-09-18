@@ -14,6 +14,8 @@ from models import UserSessionModel, EventModel
 from controllers.user_controller import UserController
 from controllers.event_controller import EventController
 from controllers.participant_controller import ParticipantController
+from controllers.auth_controller import AuthController
+from controllers.occurrence_controller import OccurrenceController
 from services.event_service import EventService
 from pathlib import Path
 # import logging
@@ -73,7 +75,7 @@ flash_config = FlashConfig(template_config=template_config)
 
 # Application
 app = Litestar(
-    route_handlers=[index, statics, UserController, EventController, ParticipantController],
+    route_handlers=[index, statics, UserController, EventController, ParticipantController, AuthController, OccurrenceController],
     plugins=[alchemy_plugin, HTMXPlugin(), FlashPlugin(flash_config)],
     middleware=[session_config.middleware],
     template_config=template_config,

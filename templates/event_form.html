@@ -1,54 +1,64 @@
+{% block content %}
+
 <div class="modal">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-    <h3 style="margin: 0;">📅 Novo Evento</h3>
-    <button onclick="document.getElementById('modal').innerHTML = ''"
-            style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6c757d;">
+    <h3 style="margin: 0;">{% if event %}✏️ Editar{% else %} 📅 Novo{% endif %} Evento</h3>
+    <button hx-get="/events" hx-target="#content" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6c757d;">
       ✕
     </button>
   </div>
   
-  <form hx-post="/events" hx-target="#content" hx-swap="innerHTML" hx-indicator="#loading">
+  <form {% if event %}hx-patch{% else %}hx-post{% endif %}="/events{% if event %}/{{ event.id }}{% endif %}" hx-target="#content" hx-swap="innerHTML" hx-indicator="#loading">
     <label>
       Nome do Evento
-      <input type="text" name="name" required placeholder="Digite o nome do evento">
+      <input 
+      type="text" 
+      name="name" 
+      value="{{ event.name if event else '' }}" 
+      required 
+      placeholder="Digite o nome do evento">
     </label>
 
     <label>
       Descrição
-      <textarea name="description" placeholder="Descreva o evento (opcional)" rows="3"></textarea>
+      <textarea 
+      name="description" 
+      placeholder="Descreva o evento (opcional)" 
+      rows="3">{{ event.description if event else '' }}</textarea>
     </label>
 
     <label style="flex-direction: row; align-items: center; gap: 0.5rem;">
-      <input type="checkbox" name="is_recurring" id="is_recurring" onchange="toggleRecurrence(this)">
+      <input type="checkbox" name="is_recurring" id="is_recurring" onchange="toggleRecurrence(this)" {% if event and event.is_recurring %}checked{% endif %}>
       🔄 Este é um evento recorrente
     </label>
 
-    <div id="oneoff">
+    <div id="oneoff" {% if event and event.is_recurring %}style="display:none"{% endif %}>
       <h4 style="color: #27ae60; margin: 1rem 0 0.5rem 0;">📅 Evento Único</h4>
       <label>
         🕐 Data e Hora de Início
-        <input type="datetime-local" name="single_start" required>
+        <input type="datetime-local" name="single_start" value="{{ event.single_start.strftime('%Y-%m-%dT%H:%M') if event and event.single_start else '' }}" required>
       </label>
       <label>
         🕐 Data e Hora de Fim
-        <input type="datetime-local" name="single_end" required>
+        <input type="datetime-local" name="single_end" value="{{ event.single_end.strftime('%Y-%m-%dT%H:%M') if event and event.single_end else '' }}" required>
       </label>
     </div>
 
-    <div id="recurrence" style="display:none">
+    <div id="recurrence" {% if event and not event.is_recurring %}style="display:none"{% endif %}>
       <h4 style="color: #f39c12; margin: 1rem 0 0.5rem 0;">🔄 Evento Recorrente</h4>
       <label>
         📅 Data de Início do Período
-        <input type="date" name="recurrence_start_date">
+        <input type="date" name="recurrence_start_date" value="{{ event.recurrence_start_date.isoformat() if event and event.recurrence_start_date else '' }}">
       </label>
       <label>
         📅 Data de Fim do Período
-        <input type="date" name="recurrence_end_date">
+        <input type="date" name="recurrence_end_date" value="{{ event.recurrence_end_date.isoformat() if event and event.recurrence_end_date else '' }}">
       </label>
       <label>
         📆 Dias da Semana
         <input type="text" name="recurrence_rule.weekdays"
-               placeholder="Ex: 0,1,2,3,4 (Seg-Sex) ou 6 (Dom)">
+                value="{{ event.recurrence_rule.weekdays | join(',') if event and event.recurrence_rule and event.recurrence_rule.get('weekdays') else '' }}"
+                placeholder="Ex: 0,1,2,3,4 (Seg-Sex) ou 6 (Dom)">
         <small style="color: #6c757d; font-size: 0.85rem;">
           0=Segunda, 1=Terça, 2=Quarta, 3=Quinta, 4=Sexta, 5=Sábado, 6=Domingo
         </small>
@@ -56,7 +66,8 @@
       <label>
         🕐 Horários (separados por vírgula)
         <input type="text" name="recurrence_rule.time_windows"
-               placeholder="Ex: 10:00-12:00,18:00-20:00">
+                value="{{ event.recurrence_rule.time_windows | join(',') if event and event.recurrence_rule and event.recurrence_rule.get('time_windows') else '' }}"
+                placeholder="Ex: 10:00-12:00,18:00-20:00">
         <small style="color: #6c757d; font-size: 0.85rem;">
           Formato: HH:MM-HH:MM, separados por vírgula
         </small>
@@ -83,7 +94,7 @@ function toggleRecurrence(cb) {
   const oneoff = document.getElementById('oneoff');
   const singleInputs = oneoff.querySelectorAll('input[required]');
   const recurrenceInputs = recurrence.querySelectorAll('input');
-  
+
   if (cb.checked) {
     recurrence.style.display = 'block';
     oneoff.style.display = 'none';
@@ -99,6 +110,14 @@ function toggleRecurrence(cb) {
   }
 }
 
+// Initialize form based on existing event
+document.addEventListener('DOMContentLoaded', function() {
+  const isRecurringCheckbox = document.getElementById('is_recurring');
+  if (isRecurringCheckbox && isRecurringCheckbox.checked) {
+    toggleRecurrence(isRecurringCheckbox);
+  }
+});
+
 // Auto-close modal on successful submission
 document.body.addEventListener('htmx:afterSwap', function(evt) {
   if (evt.detail.target.id === 'content') {
@@ -106,3 +125,5 @@ document.body.addEventListener('htmx:afterSwap', function(evt) {
   }
 });
 </script>
+
+{% endblock %}

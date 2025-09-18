@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <link rel="stylesheet" href="/static/css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="icon" href="/static/img/calendar-event-thumbnail.ico" type="image/x-icon">
 </head>
 <body>
@@ -15,6 +16,12 @@
   <nav>
     📅<a href="/events">Eventos</a>|
     👥<a href="/participants">Participantes</a>
+    {% if request.session.get('user_id') %}
+      | 👤{{ request.session.get('username') }}
+      | <form style="display: inline;" hx-post="/auth/logout"><button type="submit" style="background: none; border: none; color: inherit; cursor: pointer;">🚪 Sair</button></form>
+    {% else %}
+      | <a href="/auth/login">🔐 Login</a>
+    {% endif %}
   </nav>
 </header>
 
@@ -34,7 +41,7 @@
   {% block content %}{% endblock %}
 </main>
 <footer>
-  <small>&copy; {{  now().year if now else "" }}</small>
+  <small>&copy; 2025</small>
 </footer>
 </body>
 </html>

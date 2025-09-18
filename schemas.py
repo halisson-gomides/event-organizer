@@ -37,13 +37,39 @@ class UserUpdate(BaseSchema):
     profile: str | None = None
 
 
+class UserLogin(BaseSchema):
+    username: str
+    password: str
+
+
+class UserRegister(BaseSchema):
+    username: str
+    email: str
+    password: str
+    password_confirm: str
+    profile: str | None = None
+
+
 # ################################################
 # -- Event
 
 class AttendanceRead(BaseSchema):
+    occurrence_id: int
+    participant_id: int
     checkin_at: datetime
-    checkout_at: datetime
+    checkout_at: datetime | None = None
     code_hash: str | None = None
+    checkout_by_participant_id: int | None = None
+
+
+class AttendanceCreate(BaseSchema):
+    occurrence_id: int
+    participant_id: int
+    code_hash: str | None = None
+
+
+class AttendanceUpdate(BaseSchema):
+    checkout_at: datetime | None = None
     checkout_by_participant_id: int | None = None
     
 

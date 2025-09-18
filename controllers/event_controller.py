@@ -3,7 +3,8 @@ from datetime import datetime, date
 
 from litestar import Controller, get, post, patch, delete, Request
 from litestar.params import Dependency, Parameter, Body
-from litestar.response import Template, Redirect
+from litestar.response import Template
+from litestar.status_codes import HTTP_200_OK
 from litestar.plugins.htmx import HTMXTemplate, HTMXRequest
 from litestar.plugins.flash import flash
 from advanced_alchemy.extensions.litestar import filters, providers, service
@@ -19,7 +20,7 @@ class EventController(Controller):
         EventService,
         "events_service",
         load=[EventModel.occurrences],
-        filters={"pagination_type": "limit_offset", "id_filter": int, "search": "email", "search_ignore_case": True},
+        filters={"pagination_type": "limit_offset", "id_filter": int, "search": "name", "search_ignore_case": True},
     )
 
 
@@ -136,36 +137,115 @@ class EventController(Controller):
             return HTMXTemplate(template_name="event_form.html")
     
 
-    @get(path="/events/{event_id:int}")
-    async def get_event(
+    @get(path="/events/{event_id:int}/edit")
+    async def edit_event_form(
         self,
         events_service: EventService,
         event_id: int = Parameter(
             title="Event ID",
-            description="The event to retrieve.",
+            description="The event to edit.",
         ),
-    ) -> EventRead:
-        """Get an existing event."""
-        obj = await events_service.get(event_id)
-        return events_service.to_schema(obj, schema_type=EventRead)
+    ) -> Template:
+        """Render the event edit form."""
+
+        event = await events_service.get(event_id)
+        context = {
+            "event": event
+        }
+        return HTMXTemplate(template_name="event_form.html", context=context)
     
 
     @patch(path="/events/{event_id:int}")
     async def update_event(
         self,
+        request: HTMXRequest,
         events_service: EventService,
-        data: Annotated[EventUpdate, Body()],
         event_id: int = Parameter(
             title="Event ID",
             description="The event to update.",
         ),
-    ) -> EventRead:
+    ) -> Template:
         """Update an event."""
-        obj = await events_service.update(data, item_id=event_id, auto_commit=True)
-        return events_service.to_schema(obj, schema_type=EventRead)
+        try:
+            # Get form data from request
+            form_data = await request.form()
+
+            # Convert form data to EventUpdate schema
+            form_dict = {}
+
+            # Basic fields
+            form_dict["name"] = form_data.get("name", "")
+            form_dict["description"] = form_data.get("description", "")
+
+            # Handle checkbox - convert "on" or "true" to boolean
+            is_recurring_value = form_data.get("is_recurring")
+            form_dict["is_recurring"] = is_recurring_value in ["on", "true", True]
+
+            # Handle datetime fields for single events
+            single_start = form_data.get("single_start")
+            if single_start:
+                form_dict["single_start"] = datetime.fromisoformat(single_start)
+
+            single_end = form_data.get("single_end")
+            if single_end:
+                form_dict["single_end"] = datetime.fromisoformat(single_end)
+
+            # Handle date fields for recurring events
+            recurrence_start_date = form_data.get("recurrence_start_date")
+            if recurrence_start_date:
+                form_dict["recurrence_start_date"] = date.fromisoformat(recurrence_start_date)
+
+            recurrence_end_date = form_data.get("recurrence_end_date")
+            if recurrence_end_date:
+                form_dict["recurrence_end_date"] = date.fromisoformat(recurrence_end_date)
+
+            # Handle recurrence rule
+            recurrence_rule = {}
+            if form_data.get("recurrence_rule.weekdays"):
+                # Parse weekdays (comma-separated string to list)
+                weekdays_str = form_data.get("recurrence_rule.weekdays", "")
+                weekdays = [day.strip() for day in weekdays_str.split(",") if day.strip()]
+                recurrence_rule["weekdays"] = weekdays
+
+            if form_data.get("recurrence_rule.time_windows"):
+                # Parse time windows (comma-separated HH:MM-HH:MM format)
+                time_windows_str = form_data.get("recurrence_rule.time_windows", "")
+                time_windows = [window.strip() for window in time_windows_str.split(",") if window.strip()]
+                recurrence_rule["time_windows"] = time_windows
+
+            form_dict["recurrence_rule"] = recurrence_rule
+
+            # Create EventUpdate instance
+            event_data = EventUpdate(**form_dict)
+
+            obj = await events_service.update(event_data, item_id=event_id, auto_commit=True)
+
+            # Flash success message
+            flash(request, "Evento atualizado com sucesso!", category="success")
+
+            # Return updated event list
+            results, total = await events_service.list_and_count()
+            events_data = events_service.to_schema(results, total, schema_type=EventRead)
+
+            context = {
+                "events": events_data.items,
+                "total": events_data.total,
+                "has_events": len(events_data.items) > 0
+            }
+
+            return HTMXTemplate(template_name="event_list_content.html", context=context)
+
+        except Exception as e:
+            # Flash error message
+            flash(request, f"Erro ao atualizar evento: {str(e)}", category="error")
+
+            # Return the form with error
+            event = await events_service.get(event_id)
+            context = {"event": event}
+            return HTMXTemplate(template_name="event_form.html", context=context)
     
 
-    @delete(path="/events/{event_id:int}", status_code=200)
+    @delete(path="/events/{event_id:int}", status_code=HTTP_200_OK)
     async def delete_event(
         self,
         request: HTMXRequest,

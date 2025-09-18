@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Registro{% endblock %}
+{% block content %}
+
+<div class="auth-container">
+  <div class="auth-form">
+    <h2>📝 Criar Conta</h2>
+    
+    <form hx-post="/auth/register" hx-target="body" hx-swap="outerHTML">
+      <div class="form-group">
+        <label for="username">Usuário *</label>
+        <input type="text" 
+               id="username" 
+               name="username" 
+               required 
+               maxlength="50"
+               placeholder="Escolha um nome de usuário">
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email *</label>
+        <input type="email" 
+               id="email" 
+               name="email" 
+               required 
+               maxlength="100"
+               placeholder="seu@email.com">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Senha *</label>
+        <input type="password" 
+               id="password" 
+               name="password" 
+               required 
+               minlength="6"
+               placeholder="Mínimo 6 caracteres">
+      </div>
+
+      <div class="form-group">
+        <label for="password_confirm">Confirmar Senha *</label>
+        <input type="password" 
+               id="password_confirm" 
+               name="password_confirm" 
+               required 
+               minlength="6"
+               placeholder="Digite a senha novamente">
+      </div>
+
+      <div class="form-group">
+        <label for="profile">Perfil</label>
+        <select id="profile" name="profile">
+          <option value="">Selecione um perfil</option>
+          <option value="admin">Administrador</option>
+          <option value="organizer">Organizador</option>
+          <option value="volunteer">Voluntário</option>
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">
+          ✅ Criar Conta
+        </button>
+      </div>
+    </form>
+
+    <div class="auth-links">
+      <p>Já tem uma conta? <a href="/auth/login" hx-get="/auth/login" hx-target="body" hx-swap="outerHTML">Faça login</a></p>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
