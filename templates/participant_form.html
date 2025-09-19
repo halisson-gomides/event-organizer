@@ -3,44 +3,33 @@
 <div class="modal">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
     <h3 style="margin: 0;">{% if participant %}✏️ Editar{% else %}👤 Novo{% endif %} Participante</h3>
-    <button hx-get="/participants" hx-target="#content" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6c757d;">
+    <button hx-get="/participants" hx-target="#content"
+      style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6c757d;">
       ✕
     </button>
   </div>
 
-  <form {% if participant %}hx-patch{% else %}hx-post{% endif %}="/participants{% if participant %}/{{ participant.id }}{% endif %}"
-        hx-target="#content"
-        hx-swap="innerHTML"
-        hx-indicator="#loading">
-    
+  <form {% if participant %}hx-patch{% else %}hx-post{% endif
+    %}="/participants{% if participant %}/{{ participant.id }}{% endif %}" hx-target="#content" hx-swap="innerHTML"
+    hx-indicator="#loading">
+
     <label>
       Nome Completo
-      <input
-        type="text"
-        name="full_name"
-        value="{{ participant.full_name if participant else '' }}"
-        required
+      <input type="text" name="full_name" value="{{ participant.full_name if participant else '' }}" required
         maxlength="200">
     </label>
 
     <label>
       Data de Nascimento
-      <input
-        type="date"
-        name="birth_date"
-        value="{{ participant.birth_date.isoformat() if participant and participant.birth_date else '' }}"
-        required>
+      <input type="date" name="birth_date" id="birth_date"
+        value="{{ participant.birth_date.isoformat() if participant and participant.birth_date else '' }}" required
+        onchange="checkAge()">
     </label>
 
     <label>
       Telefone
-      <input
-        type="tel"
-        name="phone"
-        value="{{ participant.phone if participant else '' }}"
-        maxlength="15"
-        placeholder="(11) 99999-9999"
-        oninput="formatPhoneNumber(this)">
+      <input type="tel" name="phone" id="phone" value="{{ participant.phone if participant else '' }}" maxlength="15"
+        placeholder="(11) 99999-9999" oninput="formatPhoneNumber(this)">
     </label>
 
     <label>
@@ -48,19 +37,17 @@
       <select name="guardian_id">
         <option value="">Nenhum</option>
         {% for guardian in guardians %}
-          <option value="{{ guardian.id }}"
-                  {% if participant and participant.guardian_id == guardian.id %}selected{% endif %}>
-            {{ guardian.full_name }} ({{ guardian.birth_date }})
-          </option>
+        <option value="{{ guardian.id }}" {% if participant and participant.guardian_id==guardian.id %}selected{% endif
+          %}>
+          {{ guardian.full_name }} - {{ guardian.phone }}
+        </option>
         {% endfor %}
       </select>
     </label>
 
     <label>
       Observações
-      <textarea
-        name="observations"
-        maxlength="200"
+      <textarea name="observations" maxlength="200"
         rows="3">{{ participant.observations if participant else '' }}</textarea>
     </label>
 
@@ -79,29 +66,63 @@
 </div>
 
 <script>
-// Auto-close modal on successful submission
-document.body.addEventListener('htmx:afterSwap', function(evt) {
-  if (evt.detail.target.id === 'content') {
-    document.getElementById('modal').innerHTML = '';
-  }
-});
+  // Auto-close modal on successful submission
+  document.body.addEventListener('htmx:afterSwap', function (evt) {
+    if (evt.detail.target.id === 'content') {
+      document.getElementById('modal').innerHTML = '';
+    }
+  });
 
-function formatPhoneNumber(input) {
+  function formatPhoneNumber(input) {
     let value = input.value.replace(/\D/g, ''); // Remove non-digits
     let formattedValue = '';
 
     if (value.length > 0) {
-        formattedValue += '(' + value.substring(0, 2);
+      formattedValue += '(' + value.substring(0, 2);
     }
     if (value.length > 2) {
-        formattedValue += ') ' + value.substring(2, 7);
+      formattedValue += ') ' + value.substring(2, 7);
     }
     if (value.length > 7) {
-        formattedValue += '-' + value.substring(7, 11);
+      formattedValue += '-' + value.substring(7, 11);
     }
 
     input.value = formattedValue;
-}
+  }
+
+  function checkAge() {
+    const birthDateInput = document.getElementById('birth_date');
+    const phoneInput = document.getElementById('phone');
+
+    if (birthDateInput.value) {
+      const birthDate = new Date(birthDateInput.value);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      // Adjust age if birthday hasn't occurred this year
+      const actualAge = (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()))
+        ? age - 1 : age;
+
+      if (actualAge < 12) {
+        phoneInput.value = '';
+        phoneInput.readOnly = true;
+        phoneInput.style.backgroundColor = '#f8f9fa';
+        phoneInput.style.color = '#6c757d';
+        phoneInput.placeholder = 'Não aplicável para menores de 12 anos';
+      } else {
+        phoneInput.readOnly = false;
+        phoneInput.style.backgroundColor = '';
+        phoneInput.style.color = '';
+        phoneInput.placeholder = '(11) 99999-9999';
+      }
+    }
+  }
+
+  // Check age on page load if birth date is already filled
+  document.addEventListener('DOMContentLoaded', function () {
+    checkAge();
+  });
 </script>
 
 {% endblock %}

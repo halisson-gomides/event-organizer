@@ -36,10 +36,11 @@ A modern web application for organizing and managing presential events, built wi
    cd events-organizer
    ```
 
-2. **Install dependencies**
+2. **Install dependencies and active virtual environment**
    ```bash
    curl -LsSf https://astral.sh/uv/install.sh | sh
    uv sync
+   source .venv/bin/activate
    ```
 
 3. **Set up environment variables**
@@ -61,7 +62,7 @@ A modern web application for organizing and managing presential events, built wi
 
  **Run database migrations**
    ```bash
-   alchemy --config app.alchemy_config init
+   litestar database init
    litestar database make-migrations
    litestar database upgrade
    ```
