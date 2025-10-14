@@ -132,3 +132,31 @@ class UserModel(base.DefaultBase):
         from passlib.hash import bcrypt
         self.password_hash = bcrypt.hash(raw_password)
 
+class RegistrationRequestModel(base.DefaultBase):
+    __tablename__ = "registration_requests"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String(50), nullable=False)
+    email: Mapped[str] = mapped_column(String(100), nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    profile: Mapped[str] = mapped_column(String(20), nullable=True)
+    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False, server_default=text("'pending'"))
+    # Status can be: pending, approved, rejected
+    requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    reviewed_by_user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
+    rejection_reason: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
+    reviewed_by: Mapped[Optional["UserModel"]] = relationship(foreign_keys=[reviewed_by_user_id])
+
+    __table_args__ = (
+        UniqueConstraint("username", name="uq_registration_requests_username"),
+        UniqueConstraint("email", name="uq_registration_requests_email"),
+        Index("ix_registration_requests_status", "status"),
+        Index("ix_registration_requests_requested_at_desc", text("requested_at DESC")),
+    )
+
+    def set_password(self, raw_password: str) -> None:
+        from passlib.hash import bcrypt
+        self.password_hash = bcrypt.hash(raw_password)
+

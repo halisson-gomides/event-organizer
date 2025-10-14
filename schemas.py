@@ -51,6 +51,37 @@ class UserRegister(BaseSchema):
 
 
 # ################################################
+# -- Registration Request
+
+class RegistrationRequestRead(BaseSchema):
+    id: int
+    username: str
+    email: str
+    status: str
+    requested_at: datetime
+    profile: str | None = None
+    reviewed_at: datetime | None = None
+    reviewed_by_user_id: int | None = None
+    rejection_reason: str | None = None
+
+
+class RegistrationRequestCreate(BaseSchema):
+    username: str
+    email: str
+    password: str
+    profile: str | None = None
+
+
+class RegistrationRequestUpdate(BaseSchema):
+    username: str
+    email: str
+    status: str
+    profile: str | None = None
+    rejection_reason: str | None = None
+
+
+
+# ################################################
 # -- Event
 
 class AttendanceRead(BaseSchema):

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Solicitações de Registro{% endblock %}
+{% block content %}
+
+<div class="action-bar">
+  <h2>📋 Solicitações de Registro</h2>
+</div>
+
+<div id="content">
+{% if requests %}
+  <div class="list-grid">
+    {% for req in requests %}
+      <div class="list-card">
+        
+        <div class="list-info">
+          <h3>{{ req.username }}</h3>
+
+          <div class="list-type {{ req.status }}">
+            {% if req.status == 'pending' %}
+              ⏳ PENDENTE
+            {% elif req.status == 'approved' %}
+              ✅ APROVADO
+            {% elif req.status == 'rejected' %}
+              ❌ REJEITADO
+            {% endif %}
+          </div>
+          
+          <div class="list-details">
+            <div><strong>Email:</strong> {{ req.email }}</div>
+            <div><strong>Perfil:</strong> 
+              {% if req.profile == 'admin' %}
+                Administrador
+              {% elif req.profile == 'organizer' %}
+                Organizador
+              {% elif req.profile == 'volunteer' %}
+                Voluntário
+              {% else %}
+                Não especificado
+              {% endif %}
+            </div>
+            <div><strong>Solicitado em:</strong> {{ req.requested_at|to_local_time }}</div>
+            
+            {% if req.reviewed_at %}
+              <div><strong>Revisado em:</strong> {{ req.reviewed_at|to_local_time }}</div>
+            {% endif %}
+            
+            {% if req.rejection_reason %}
+              <div><strong>❗ Motivo:</strong> {{ req.rejection_reason }}</div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <div class="list-actions">
+          {% if req.status == 'pending' %}
+            <button class="btn-small"
+                    hx-get="/registrations/{{ req.id }}"
+                    hx-target="#content"
+                    hx-swap="innerHTML">
+              ✏️ Revisar
+            </button>
+          {% else %}
+            <button class="btn-small"
+                    hx-get="/registrations/{{ req.id }}"
+                    hx-target="#content"
+                    hx-swap="innerHTML">
+              Ver Detalhes
+            </button>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty-state">
+    <h3>📭 Nenhuma solicitação de registro</h3>
+    <p>Não há solicitações de registro no momento.</p>
+  </div>
+{% endif %}
+</div>
+{% endblock %}

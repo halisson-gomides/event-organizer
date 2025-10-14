@@ -2,14 +2,16 @@ from typing import Annotated
 
 from litestar import Controller, get, post
 from litestar.params import Body
+from litestar.di import Provide
 from litestar.plugins.htmx import HTMXRequest, HTMXTemplate
 from litestar.plugins.flash import flash
 from litestar.response import Template, Redirect
 from litestar.status_codes import HTTP_302_FOUND
 from advanced_alchemy.extensions.litestar import providers
 from services.user_service import UserService
+from services.registration_service import RegistrationService
 from schemas import UserCreate
-from models import UserModel
+from models import UserModel, RegistrationRequestModel
 from passlib.hash import bcrypt
 
 
@@ -18,10 +20,10 @@ class AuthController(Controller):
     
     path = "/auth"
     
-    dependencies = providers.create_service_dependencies(
-        UserService,
-        "users_service",
-    )
+    dependencies = {
+        **providers.create_service_dependencies(UserService, "users_service"),
+        **providers.create_service_dependencies(RegistrationService, "registration_service"),
+    }
 
     @get(path="/login")
     async def login_form(self) -> Template:
@@ -68,25 +70,31 @@ class AuthController(Controller):
             flash(request, f"Erro no login: {str(e)}", category="error")
             return HTMXTemplate(template_name="login.html")
 
+
     @get(path="/register")
     async def register_form(self) -> Template:
         """Render the registration form."""
         return HTMXTemplate(template_name="register.html")
+        
 
     @post(path="/register")
     async def register(
         self,
         request: HTMXRequest,
         users_service: UserService,
+        registration_service: RegistrationService,
     ) -> Template | Redirect:
-        """Process registration."""
+        """Process registration - creates a registration request for admin approval."""
         try:
             form_data = await request.form()
             username = form_data.get("username")
             email = form_data.get("email")
             password = form_data.get("password")
             password_confirm = form_data.get("password_confirm")
-            profile = form_data.get("profile") or None
+            profile = form_data.get("profile")
+            # Convert empty string to None for profile
+            if profile == "":
+                profile = None
             
             # Validation
             if not all([username, email, password, password_confirm]):
@@ -101,7 +109,7 @@ class AuthController(Controller):
                 flash(request, "A senha deve ter pelo menos 6 caracteres", category="error")
                 return HTMXTemplate(template_name="register.html")
             
-            # Check if username or email already exists
+            # Check if username or email already exists in users
             users, _ = await users_service.list_and_count()
             if any(u.username == username for u in users):
                 flash(request, "Nome de usuário já existe", category="error")
@@ -111,31 +119,40 @@ class AuthController(Controller):
                 flash(request, "Email já está cadastrado", category="error")
                 return HTMXTemplate(template_name="register.html")
             
-            # Create user
-            user_data = UserCreate(
+            # Check if username or email already has a pending registration request
+            registration_requests, _ = await registration_service.list_and_count()
+            pending_requests = [r for r in registration_requests if r.status == "pending"]
+            
+            if any(r.username == username for r in pending_requests):
+                flash(request, "Já existe uma solicitação de registro pendente com este nome de usuário", category="error")
+                return HTMXTemplate(template_name="register.html")
+            
+            if any(r.email == email for r in pending_requests):
+                flash(request, "Já existe uma solicitação de registro pendente com este email", category="error")
+                return HTMXTemplate(template_name="register.html")
+            
+            # Create registration request
+            registration_request = RegistrationRequestModel(
                 username=username,
                 email=email,
-                is_active=True,  # Auto-activate for now
-                profile=profile
+                profile=profile,
+                status="pending"
             )
             
-            user = await users_service.create(user_data)
+            # Set password using the model method
+            registration_request.set_password(password)
             
-            # Set password (using the model method)
-            user.set_password(password)
-            await users_service.repository.session.commit()
+            # Add to session and commit
+            registration_service.repository.session.add(registration_request)
+            await registration_service.repository.session.commit()
+            await registration_service.repository.session.refresh(registration_request)
             
-            flash(request, f"Conta criada com sucesso! Bem-vindo, {username}!", category="success")
+            flash(request, "Solicitação de registro enviada com sucesso! Aguarde a aprovação do administrador.", category="success")
             
-            # Auto-login after registration
-            request.session["user_id"] = user.id
-            request.session["username"] = user.username
-            request.session["profile"] = user.profile
-            
-            return Redirect(path="/", status_code=HTTP_302_FOUND)
+            return Redirect(path="/auth/login", status_code=HTTP_302_FOUND)
             
         except Exception as e:
-            flash(request, f"Erro ao criar conta: {str(e)}", category="error")
+            flash(request, f"Erro ao criar solicitação de registro: {str(e)}", category="error")
             return HTMXTemplate(template_name="register.html")
 
     @post(path="/logout")

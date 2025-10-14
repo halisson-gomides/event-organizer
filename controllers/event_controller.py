@@ -11,6 +11,7 @@ from advanced_alchemy.extensions.litestar import filters, providers, service
 from services.event_service import EventService
 from schemas import EventRead, EventCreate, EventUpdate
 from models import EventModel
+from middleware import require_profiles
 
 
 class EventController(Controller):
@@ -47,8 +48,9 @@ class EventController(Controller):
     
 
     @get(path="/events/new")
-    async def new_event_form(self) -> Template:
+    async def new_event_form(self, request: Request) -> Template:
         """Render the event creation form."""
+        require_profiles(request, ["admin", "organizer"])
         return HTMXTemplate(template_name="event_form.html")
     
 
@@ -59,6 +61,7 @@ class EventController(Controller):
         events_service: EventService,
     ) -> Template:
         """Create a new event."""
+        require_profiles(request, ["admin", "organizer"])
         try:
             # Get form data from request
             form_data = await request.form()
@@ -140,6 +143,7 @@ class EventController(Controller):
     @get(path="/events/{event_id:int}/edit")
     async def edit_event_form(
         self,
+        request: Request,
         events_service: EventService,
         event_id: int = Parameter(
             title="Event ID",
@@ -147,7 +151,7 @@ class EventController(Controller):
         ),
     ) -> Template:
         """Render the event edit form."""
-
+        require_profiles(request, ["admin", "organizer"])
         event = await events_service.get(event_id)
         context = {
             "event": event
@@ -166,6 +170,7 @@ class EventController(Controller):
         ),
     ) -> Template:
         """Update an event."""
+        require_profiles(request, ["admin", "organizer"])
         try:
             # Get form data from request
             form_data = await request.form()
@@ -256,6 +261,7 @@ class EventController(Controller):
         ),
     ) -> Template:
         """Delete an event from the system."""
+        require_profiles(request, ["admin", "organizer"])
         try:
             await events_service.delete(event_id)
             

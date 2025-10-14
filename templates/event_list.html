@@ -4,9 +4,12 @@
 
 <div class="action-bar">
   <h2>📅 Eventos</h2>
+  {% set user_profile = request.session.get('profile') %}
+  {% if user_profile in ['admin', 'organizer'] %}
   <button class="btn-primary" hx-get="/events/new" hx-target="#content" hx-swap="innerHTML">
     ➕ Novo Evento
   </button>
+  {% endif %}
 </div>
 
 <div id="content">

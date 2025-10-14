@@ -1,3 +1,4 @@
+ {% set user_profile = request.session.get('profile') %}
  {% if has_participants %}
     <div class="list-grid">
       {% for p in participants %}
@@ -23,29 +24,33 @@
               <p><strong>Observações:</strong> {{ p.observations }}</p>
             {% endif %}
           </div>
+          {% if user_profile in ['admin', 'organizer'] %}
           <div class="list-actions">
-            <button class="btn-small btn-edit" 
-                    hx-get="/participants/{{ p.id }}/edit" 
-                    hx-target="#content" 
+            <button class="btn-small btn-edit"
+                    hx-get="/participants/{{ p.id }}/edit"
+                    hx-target="#content"
                     hx-swap="innerHTML">
               ✏️ Editar
             </button>
-            <button class="btn-small btn-delete" 
-                    hx-delete="/participants/{{ p.id }}" 
-                    hx-target="#content" 
+            <button class="btn-small btn-delete"
+                    hx-delete="/participants/{{ p.id }}"
+                    hx-target="#content"
                     hx-swap="innerHTML"
                     hx-confirm="Tem certeza que deseja excluir {{ p.full_name }}?">
               🗑️ Excluir
             </button>
           </div>
+          {% endif %}
         </div>
       {% endfor %}
     </div>
   {% else %}
     <div class="empty-state">
       <p>Nenhum participante cadastrado.</p>
+      {% if user_profile in ['admin', 'organizer'] %}
       <button class="btn-primary" hx-get="/participants/new" hx-target="#content" hx-swap="innerHTML">
         ➕ Cadastrar Primeiro Participante
       </button>
+      {% endif %}
     </div>
   {% endif %}

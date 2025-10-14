@@ -1,6 +1,6 @@
 from typing import Annotated
 from datetime import datetime, date
-from litestar import Controller, get, post, patch, delete
+from litestar import Controller, get, post, patch, delete, Request
 from litestar.params import Dependency, Parameter, Body
 from litestar.plugins.htmx import HTMXRequest, HTMXTemplate
 from litestar.plugins.flash import flash
@@ -10,6 +10,7 @@ from advanced_alchemy.extensions.litestar import filters, providers
 from services.participant_service import ParticipantService
 from schemas import ParticipantRead, ParticipantCreate, ParticipantUpdate
 from models import ParticipantModel
+from middleware import require_profiles
 
 
 class ParticipantController(Controller):
@@ -47,8 +48,9 @@ class ParticipantController(Controller):
     
 
     @get(path="/participants/new")
-    async def new_participant_form(self, participants_service: ParticipantService) -> Template:
+    async def new_participant_form(self, request: Request, participants_service: ParticipantService) -> Template:
         """Render the participant creation form."""
+        require_profiles(request, ["Administrador", "Organizador"])
         # Get potential guardians (adults)
 
         today = date.today()
@@ -71,6 +73,7 @@ class ParticipantController(Controller):
         participants_service: ParticipantService,
     ) -> Template:
         """Create a new participant."""
+        require_profiles(request, ["Administrador", "Organizador"])
         try:
             # Get form data from request
             form_data = await request.form()
@@ -132,6 +135,7 @@ class ParticipantController(Controller):
     @get(path="/participants/{participant_id:int}/edit")
     async def edit_participant_form(
         self,
+        request: Request,
         participants_service: ParticipantService,
         participant_id: int = Parameter(
             title="Participant ID",
@@ -139,6 +143,7 @@ class ParticipantController(Controller):
         ),
     ) -> Template:
         """Render the participant edit form."""
+        require_profiles(request, ["admin", "organizer"])
         participant = await participants_service.get(participant_id)
         
         # Get potential guardians (adults, excluding self)
@@ -166,6 +171,7 @@ class ParticipantController(Controller):
         ),
     ) -> Template:
         """Update a participant."""
+        require_profiles(request, ["admin", "organizer"])
         try:
             # Get form data from request
             form_data = await request.form()
@@ -236,6 +242,7 @@ class ParticipantController(Controller):
         ),
     ) -> Template:
         """Delete a participant from the system."""
+        require_profiles(request, ["admin", "organizer"])
         try:
             participant = await participants_service.get(participant_id)
             participant_name = participant.full_name

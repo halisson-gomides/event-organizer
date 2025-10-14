@@ -3,7 +3,7 @@ import secrets
 import hashlib
 from datetime import datetime
 
-from litestar import Controller, get, post
+from litestar import Controller, get, post, Request
 from litestar.params import Parameter
 from litestar.plugins.htmx import HTMXRequest, HTMXTemplate
 from litestar.plugins.flash import flash
@@ -13,6 +13,7 @@ from services.occurrence_service import OccurrenceService
 from services.attendance_service import AttendanceService
 from services.participant_service import ParticipantService
 from models import EventOccurrenceModel, AttendanceModel, ParticipantModel
+from middleware import require_profiles
 
 
 class OccurrenceController(Controller):
@@ -52,6 +53,7 @@ class OccurrenceController(Controller):
     @get(path="/{occurrence_id:int}/checkin")
     async def checkin_form(
         self,
+        request: Request,
         occurrences_service: OccurrenceService,
         participants_service: ParticipantService,
         occurrence_id: int = Parameter(
@@ -60,6 +62,7 @@ class OccurrenceController(Controller):
         ),
     ) -> Template:
         """Render the check-in form."""
+        require_profiles(request, ["admin", "organizer", "volunteer"])
         base_context = await self._get_base_context(occurrence_id, occurrences_service, participants_service)
         context = {
             **base_context,
@@ -83,6 +86,7 @@ class OccurrenceController(Controller):
         ),
     ) -> Template:
         """Process check-in."""
+        require_profiles(request, ["admin", "organizer", "volunteer"])
         try:
             form_data = await request.form()
             participant_id_str = form_data.get("participant_id")
@@ -158,6 +162,7 @@ class OccurrenceController(Controller):
     @get(path="/{occurrence_id:int}/checkout")
     async def checkout_form(
         self,
+        request: Request,
         occurrences_service: OccurrenceService,
         participants_service: ParticipantService,
         occurrence_id: int = Parameter(
@@ -166,6 +171,7 @@ class OccurrenceController(Controller):
         ),
     ) -> Template:
         """Render the check-out form."""
+        require_profiles(request, ["admin", "organizer", "volunteer"])
         base_context = await self._get_base_context(occurrence_id, occurrences_service, participants_service)
         context = {
             **base_context,
@@ -188,6 +194,7 @@ class OccurrenceController(Controller):
         ),
     ) -> Template:
         """Process check-out."""
+        require_profiles(request, ["admin", "organizer", "volunteer"])
         try:
             form_data = await request.form()
             participant_id_str = form_data.get("participant_id")

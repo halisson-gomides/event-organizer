@@ -15,10 +15,15 @@
   <h1>Gerenciador de Eventos</h1>
   <nav>
     📅<a href="/events">Eventos</a>|
-    👥<a href="/participants">Participantes</a>
+    👥<a href="/participants">Participantes</a>|
+    ✅<a href="/events">Check-in</a>|
+    ✔️<a href="/events">Check-out</a>
     {% if request.session.get('user_id') %}
-      | 👤{{ request.session.get('username') }}
-      | <form style="display: inline;" hx-post="/auth/logout"><button type="submit" style="background: none; border: none; color: inherit; cursor: pointer;">🚪 Sair</button></form>
+      {% if request.session.get('profile') == 'admin' %}
+        | 📋<a href="/registrations">Registros</a>
+      {% endif %}
+      | �{{ request.session.get('username') }}
+      | <form style="display: inline;" hx-post="/auth/logout" hx-target="body" hx-swap="outerHTML"><button type="submit" style="background: none; border: none; color: inherit; cursor: pointer;">🚪 Sair</button></form>
     {% else %}
       | <a href="/auth/login">🔐 Login</a>
     {% endif %}
@@ -26,22 +31,22 @@
 </header>
 
 <!-- Flash Messages -->
+<div id="flash-messages" style="position: fixed; top: 20px; right: 20px; z-index: 1000; max-width: 400px;">
 {% if get_flashed_messages %}
-<div id="flash-messages">
   {% for category, message in get_flashed_messages(with_categories=true) %}
-    <div class="flash-message {{ category }}">
+    <div class="flash-message {{ category }}" style="margin-bottom: 10px;">
       {{ message }}
       <button onclick="this.parentElement.remove()" style="float: right; background: none; border: none; font-size: 1.2em; cursor: pointer;">&times;</button>
     </div>
   {% endfor %}
-</div>
 {% endif %}
+</div>
 
 <main>
   {% block content %}{% endblock %}
 </main>
 <footer>
-  <small>&copy; 2025</small>
+  <small>KingdomSys &copy; 2025</small>
 </footer>
 </body>
 </html>

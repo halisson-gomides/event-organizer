@@ -1,0 +1,161 @@
+<!-- Flash Messages (Out-of-Band Swap) -->
+<div id="flash-messages" hx-swap-oob="true" style="position: fixed; top: 20px; right: 20px; z-index: 1000; max-width: 400px;">
+{% if get_flashed_messages %}
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="flash-message {{ category }}" style="margin-bottom: 10px; padding: 12px 16px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+      {{ message }}
+      <button onclick="this.parentElement.remove()" style="float: right; background: none; border: none; margin-left: 10px; cursor: pointer; font-size: 1.2em; color: inherit;">&times;</button>
+    </div>
+  {% endfor %}
+{% endif %}
+</div>
+
+<div class="modal">
+  {% if get_flashed_messages %}
+  <div style="margin-bottom: 1rem;">
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+      <div class="flash-message {{ category }}" style="margin-bottom: 10px;">
+        {{ message }}
+        <button onclick="this.parentElement.remove()" style="float: right; background: none; border: none; font-size: 1.2em; cursor: pointer;">&times;</button>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h3 style="margin: 0;">🔍 Revisar Solicitação</h3>
+    <button hx-get="/registrations" hx-target="body" hx-swap="outerHTML"
+      style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6c757d;">
+      ✕
+    </button>
+  </div>
+
+  <div class="list-type {{ registration_request.status }}" style="text-align: center; margin-bottom: 1.5rem; border-radius: 6px;">
+    {% if registration_request.status == 'pending' %}
+      ⏳ PENDENTE
+    {% elif registration_request.status == 'approved' %}
+      ✅ APROVADO
+    {% elif registration_request.status == 'rejected' %}
+      ❌ REJEITADO
+    {% endif %}
+  </div>
+
+  <form hx-patch="/registrations/{{ registration_request.id }}/update" 
+        hx-target="#content" 
+        hx-swap="innerHTML">
+    
+    <label>
+      Usuário *
+      <input type="text" 
+             id="username" 
+             name="username" 
+             value="{{ registration_request.username }}"
+             required 
+             maxlength="50"
+             {% if registration_request.status != 'pending' %}disabled{% endif %}>
+    </label>
+
+    <label>
+      Email *
+      <input type="email" 
+             id="email" 
+             name="email" 
+             value="{{ registration_request.email }}"
+             required 
+             maxlength="100"
+             {% if registration_request.status != 'pending' %}disabled{% endif %}>
+    </label>
+
+    <label>
+      Perfil
+      <select id="profile" 
+              name="profile"
+              {% if registration_request.status != 'pending' %}disabled{% endif %}>
+        <option value="" {% if not registration_request.profile %}selected{% endif %}>Selecione um perfil</option>
+        <option value="admin" {% if registration_request.profile == 'admin' %}selected{% endif %}>Administrador</option>
+        <option value="organizer" {% if registration_request.profile == 'organizer' %}selected{% endif %}>Organizador</option>
+        <option value="volunteer" {% if registration_request.profile == 'volunteer' %}selected{% endif %}>Voluntário</option>
+      </select>
+    </label>
+
+    <label>
+      📅 Solicitado em
+      <input type="text" 
+             value="{{ registration_request.requested_at|to_local_time }}"
+             disabled>
+    </label>
+
+    {% if registration_request.reviewed_at %}
+      <label>
+        🔍 Revisado em
+        <input type="text" 
+               value="{{ registration_request.reviewed_at|to_local_time }}"
+               disabled>
+      </label>
+    {% endif %}
+
+    {% if registration_request.status == 'pending' %}
+      <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+        <button type="button" hx-get="/registrations" hx-target="body" hx-swap="outerHTML">
+          Cancelar
+        </button>
+        <button type="submit">
+          <span>💾 Salvar Alterações</span>
+        </button>
+      </div>
+    {% endif %}
+  </form>
+
+  {% if registration_request.status == 'pending' %}
+    <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e9ecef;">
+    
+    <div style="display: flex; gap: 1rem; justify-content: center;">
+      <form hx-post="/registrations/{{ registration_request.id }}/approve" 
+            hx-target="body" 
+            hx-swap="outerHTML"
+            onsubmit="return confirm('Tem certeza que deseja aprovar esta solicitação?');">
+        <input type="hidden" name="username" value="{{ registration_request.username }}">
+        <input type="hidden" name="email" value="{{ registration_request.email }}">
+        <input type="hidden" name="profile" value="{{ registration_request.profile or '' }}">
+        <button type="submit" style="background: linear-gradient(135deg, #28a745, #218838); color: white; border: none; padding: 0.5rem 1rem;">
+          ✅ Aprovar
+        </button>
+      </form>
+
+      <button type="button" 
+              class="btn-danger"
+              onclick="document.getElementById('reject-form').style.display='block'; this.style.display='none';">
+        ❌ Rejeitar
+      </button>
+    </div>
+
+    <form id="reject-form" 
+          style="display: none; margin-top: 1.5rem;"
+          hx-post="/registrations/{{ registration_request.id }}/reject" 
+          hx-target="body" 
+          hx-swap="outerHTML">
+      <label>
+        Motivo da Rejeição (opcional)
+        <textarea id="rejection_reason" 
+                  name="rejection_reason" 
+                  rows="3"
+                  placeholder="Explique o motivo da rejeição..."></textarea>
+      </label>
+      <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
+        <button type="button" 
+                class="btn-secondary"
+                onclick="document.getElementById('reject-form').style.display='none'; document.querySelector('.btn-danger').style.display='inline-block';">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-danger">
+          Confirmar Rejeição
+        </button>
+      </div>
+    </form>
+  {% elif registration_request.status == 'rejected' and registration_request.rejection_reason %}
+    <div class="error" style="margin-top: 1.5rem;">
+      <strong>❗ Motivo da Rejeição:</strong>
+      <p style="margin: 0.5rem 0 0 0;">{{ registration_request.rejection_reason }}</p>
+    </div>
+  {% endif %}
+</div>

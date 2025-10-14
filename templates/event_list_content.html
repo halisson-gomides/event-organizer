@@ -1,3 +1,4 @@
+{% set user_profile = request.session.get('profile') %}
 {% if has_events %}
 <div class="list-grid">
   {% for event in events %}
@@ -25,7 +26,7 @@
           <div><strong>Período:</strong> {{ event.recurrence_start_date.strftime('%d/%m/%Y') }} até {{ event.recurrence_end_date.strftime('%d/%m/%Y') }}</div>
           {% endif %}
           {% if event.recurrence_rule and event.recurrence_rule.weekdays %}
-          <div><strong>Dias da semana:</strong> 
+          <div><strong>Dias da semana:</strong>
             {% for day in event.recurrence_rule.weekdays %}
               {% if day == '0' %}Seg{% elif day == '1' %}Ter{% elif day == '2' %}Qua{% elif day == '3' %}Qui{% elif day == '4' %}Sex{% elif day == '5' %}Sáb{% elif day == '6' %}Dom{% endif %}{% if not loop.last %}, {% endif %}
             {% endfor %}
@@ -44,21 +45,23 @@
         {% endif %}
       </div>
     </div>
+    {% if user_profile in ['admin', 'organizer'] %}
     <div class="list-actions">
-      <button class="btn-small btn-edit" 
-              hx-get="/events/{{ event.id }}/edit" 
-              hx-target="#content" 
+      <button class="btn-small btn-edit"
+              hx-get="/events/{{ event.id }}/edit"
+              hx-target="#content"
               hx-swap="innerHTML">
         ✏️ Editar
       </button>
-      <button class="btn-small btn-delete" 
-              hx-delete="/events/{{ event.id }}" 
-              hx-target="#content" 
+      <button class="btn-small btn-delete"
+              hx-delete="/events/{{ event.id }}"
+              hx-target="#content"
               hx-swap="innerHTML"
               hx-confirm="Tem certeza que deseja excluir este evento?">
         🗑️ Excluir
       </button>
     </div>
+    {% endif %}
   </div>
   {% endfor %}
 </div>
@@ -72,9 +75,13 @@
 {% else %}
 <div class="empty-state">
   <h3>📅 Nenhum evento cadastrado</h3>
+  {% if user_profile in ['admin', 'organizer'] %}
   <p>Comece criando seu primeiro evento clicando no botão "Novo Evento" acima.</p>
   <button class="btn-primary" hx-get="/events/new" hx-target="#content" hx-swap="innerHTML">
     ➕ Criar Primeiro Evento
   </button>
+  {% else %}
+  <p>Nenhum evento disponível no momento.</p>
+  {% endif %}
 </div>
 {% endif %}

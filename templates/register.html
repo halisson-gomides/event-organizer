@@ -6,7 +6,7 @@
   <div class="auth-form">
     <h2>📝 Criar Conta</h2>
     
-    <form hx-post="/auth/register" hx-target="body" hx-swap="outerHTML">
+    <form hx-post="/auth/register" hx-target="body" hx-swap="outerHTML" onsubmit="return validatePasswords()">
       <div class="form-group">
         <label for="username">Usuário *</label>
         <input type="text" 
@@ -63,6 +63,39 @@
         </button>
       </div>
     </form>
+
+    <script>
+      function validatePasswords() {
+        const password = document.getElementById('password').value;
+        const passwordConfirm = document.getElementById('password_confirm').value;
+        
+        if (password !== passwordConfirm) {
+          alert('As senhas não coincidem. Por favor, verifique.');
+          return false;
+        }
+        
+        if (password.length < 6) {
+          alert('A senha deve ter pelo menos 6 caracteres.');
+          return false;
+        }
+        
+        return true;
+      }
+      
+      // Real-time validation feedback
+      document.getElementById('password_confirm').addEventListener('input', function() {
+        const password = document.getElementById('password').value;
+        const passwordConfirm = this.value;
+        
+        if (passwordConfirm && password !== passwordConfirm) {
+          this.style.borderColor = '#dc3545';
+        } else if (passwordConfirm && password === passwordConfirm) {
+          this.style.borderColor = '#28a745';
+        } else {
+          this.style.borderColor = '#e1e8ed';
+        }
+      });
+    </script>
 
     <div class="auth-links">
       <p>Já tem uma conta? <a href="/auth/login" hx-get="/auth/login" hx-target="body" hx-swap="outerHTML">Faça login</a></p>
