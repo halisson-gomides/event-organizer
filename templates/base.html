@@ -13,21 +13,27 @@
 <header>
   <img src="/static/img/calendar-event-thumbnail.png" width="90px" height="90px"/>
   <h1>Gerenciador de Eventos</h1>
-  <nav>
-    📅<a href="/events">Eventos</a>|
-    👥<a href="/participants">Participantes</a>|
-    ✅<a href="/events">Check-in</a>|
-    ✔️<a href="/events">Check-out</a>
+  <div style="display: flex; flex-direction: column; align-items: flex-end;">
     {% if request.session.get('user_id') %}
-      {% if request.session.get('profile') == 'admin' %}
-        | 📋<a href="/registrations">Registros</a>
-      {% endif %}
-      | �{{ request.session.get('username') }}
-      | <form style="display: inline;" hx-post="/auth/logout" hx-target="body" hx-swap="outerHTML"><button type="submit" style="background: none; border: none; color: inherit; cursor: pointer;">🚪 Sair</button></form>
-    {% else %}
-      | <a href="/auth/login">🔐 Login</a>
+    <div style="padding: 0.5rem 1rem;">
+      {{ request.session.get('username') }}
+      | <form style="display: inline;" hx-post="/auth/logout" hx-target="body" hx-swap="outerHTML"><button type="submit" style="background: #e5a7a73b; padding: 0.2rem 0.8rem; cursor: pointer; border-color: coral;">🚪 Sair</button></form>
+    </div>
     {% endif %}
-  </nav>
+    <nav>
+      📅<a href="/events">Eventos</a>|
+      👥<a href="/participants">Participantes</a>|
+      ✅<a href="/events">Check-in</a>|
+      ✔️<a href="/events">Check-out</a>
+      {% if request.session.get('user_id') %}
+        {% if request.session.get('profile') == 'admin' %}
+          | 📋<a href="/registrations">Registros</a>
+        {% endif %}
+      {% else %}
+        | <a href="/auth/login">🔐 Login</a>
+      {% endif %}
+    </nav>
+  </div>
 </header>
 
 <!-- Flash Messages -->

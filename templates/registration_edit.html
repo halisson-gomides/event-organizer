@@ -95,9 +95,9 @@
     {% endif %}
 
     {% if registration_request.status == 'pending' %}
-      <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+      <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
         <button type="button" hx-get="/registrations" hx-target="body" hx-swap="outerHTML">
-          Cancelar
+          Voltar
         </button>
         <button type="submit">
           <span>💾 Salvar Alterações</span>
@@ -107,27 +107,27 @@
   </form>
 
   {% if registration_request.status == 'pending' %}
-    <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e9ecef;">
+    <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e9ecef;">
     
-    <div style="display: flex; gap: 1rem; justify-content: center;">
-      <form hx-post="/registrations/{{ registration_request.id }}/approve" 
+    <form hx-post="/registrations/{{ registration_request.id }}/approve" 
             hx-target="body" 
             hx-swap="outerHTML"
-            onsubmit="return confirm('Tem certeza que deseja aprovar esta solicitação?');">
+            hx-confirm="Tem certeza que deseja aprovar esta solicitação?">
+      <div style="display: flex; gap: 1rem; justify-content: center;">
         <input type="hidden" name="username" value="{{ registration_request.username }}">
         <input type="hidden" name="email" value="{{ registration_request.email }}">
         <input type="hidden" name="profile" value="{{ registration_request.profile or '' }}">
-        <button type="submit" style="background: linear-gradient(135deg, #28a745, #218838); color: white; border: none; padding: 0.5rem 1rem;">
+        
+        <button type="button" 
+                class="btn-small btn-delete"
+                onclick="document.getElementById('reject-form').style.display='block'; this.style.display='none';">
+          ❌ Rejeitar
+        </button>      
+        <button type="submit">
           ✅ Aprovar
         </button>
-      </form>
-
-      <button type="button" 
-              class="btn-danger"
-              onclick="document.getElementById('reject-form').style.display='block'; this.style.display='none';">
-        ❌ Rejeitar
-      </button>
-    </div>
+      </div>
+    </form>
 
     <form id="reject-form" 
           style="display: none; margin-top: 1.5rem;"
@@ -147,7 +147,7 @@
                 onclick="document.getElementById('reject-form').style.display='none'; document.querySelector('.btn-danger').style.display='inline-block';">
           Cancelar
         </button>
-        <button type="submit" class="btn-danger">
+        <button type="submit" class="btn-delete">
           Confirmar Rejeição
         </button>
       </div>

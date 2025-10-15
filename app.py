@@ -29,21 +29,29 @@ from zoneinfo import ZoneInfo
 # logging.basicConfig(level=logging.DEBUG)
 # logger = logging.getLogger(__name__)
 
-# Session configuration
-session_config = ServerSideSessionConfig(
+# Import middleware classes
+from litestar.middleware.session.base import SessionMiddleware
+from litestar.middleware.base import DefineMiddleware
+
+# Create a minimal session config for the backend
+_temp_session_config = ServerSideSessionConfig(
     key=settings.secret_key,
-    max_age=3600,  # 1 hour
+    max_age=3600,
 )
 
-# Session backend
+# Session backend using SQLAlchemy - stores sessions in user_sessions table
 session_backend = SQLAlchemyAsyncSessionBackend(
-    config=session_config,
+    config=_temp_session_config,
     alchemy_config=alchemy_config,
     model=UserSessionModel,
 )
 
-# Update session config with backend
-session_config.backend = session_backend
+# Create session middleware with our SQLAlchemy backend
+# The middleware only needs the backend - other config is in the backend itself
+session_middleware = DefineMiddleware(
+    SessionMiddleware,
+    backend=session_backend,
+)
 
 # Jinja2 filters
 def to_local_time(dt: datetime, fmt: str = '%d/%m/%Y %H:%M', tz: str = "America/Sao_Paulo") -> str:
@@ -80,9 +88,9 @@ index_dependencies = providers.create_service_dependencies(
 @get(path="/", name="index", dependencies=index_dependencies)
 async def index(request: HTMXRequest, events_service: EventService) -> Template:
     """Index Page"""
-    if request.htmx:
-        print(request.htmx)  # HTMXDetails instance
-        print(request.htmx.current_url)
+    # if request.htmx:
+    #     print(request.htmx)  # HTMXDetails instance
+    #     print(request.htmx.current_url)
 
     data, total = await events_service.list_and_count(filters.LimitOffset(limit=10, offset=0))
     context = {
@@ -110,7 +118,7 @@ flash_config = FlashConfig(template_config=template_config)
 app = Litestar(
     route_handlers=[index, statics, UserController, EventController, ParticipantController, AuthController, OccurrenceController, RegistrationController],
     plugins=[alchemy_plugin, HTMXPlugin(), FlashPlugin(flash_config)],
-    middleware=[session_config.middleware],
+    middleware=[session_middleware],
     template_config=TemplateConfig(
         directory=Path("templates"),
         engine=jinja_engine,

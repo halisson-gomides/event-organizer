@@ -8,7 +8,7 @@ from advanced_alchemy.extensions.litestar import (
 from config import settings
 
 
-session_config = AsyncSessionConfig(expire_on_commit=False)
+db_session_config = AsyncSessionConfig(expire_on_commit=False)
 
 alchemy_config = SQLAlchemyAsyncConfig(
     connection_string=settings.database_url,
@@ -19,7 +19,7 @@ alchemy_config = SQLAlchemyAsyncConfig(
         pool_pre_ping=True,
     ),
     before_send_handler="autocommit",
-    session_config=session_config,
+    session_config=db_session_config,
     create_all=True,
 )
 alchemy_plugin = SQLAlchemyPlugin(config=alchemy_config)
