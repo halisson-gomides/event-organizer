@@ -13,6 +13,7 @@ from services.registration_service import RegistrationService
 from schemas import UserCreate
 from models import UserModel, RegistrationRequestModel
 from passlib.hash import bcrypt
+from datetime import datetime
 
 
 class AuthController(Controller):
@@ -29,6 +30,7 @@ class AuthController(Controller):
     async def login_form(self) -> Template:
         """Render the login form."""
         return HTMXTemplate(template_name="login.html")
+
 
     @post(path="/login")
     async def login(
@@ -122,15 +124,33 @@ class AuthController(Controller):
             # Check if username or email already has a pending registration request
             registration_requests, _ = await registration_service.list_and_count()
             pending_requests = [r for r in registration_requests if r.status == "pending"]
-            
+
             if any(r.username == username for r in pending_requests):
                 flash(request, "Já existe uma solicitação de registro pendente com este nome de usuário", category="error")
                 return HTMXTemplate(template_name="register.html")
-            
+
             if any(r.email == email for r in pending_requests):
                 flash(request, "Já existe uma solicitação de registro pendente com este email", category="error")
                 return HTMXTemplate(template_name="register.html")
-            
+
+            # Check if there's a rejected registration request with the same email
+            rejected_with_email = next((r for r in registration_requests if r.status == "rejected" and r.email == email), None)
+            if rejected_with_email:
+                # Update the existing rejected request to pending
+                rejected_with_email.username = username
+                rejected_with_email.email = email
+                rejected_with_email.profile = profile
+                rejected_with_email.status = "pending"
+                rejected_with_email.rejection_reason = None
+                rejected_with_email.requested_at = datetime.now()
+                rejected_with_email.set_password(password)
+
+                await registration_service.repository.session.commit()
+                await registration_service.repository.session.refresh(rejected_with_email)
+
+                flash(request, "Solicitação de registro reenviada com sucesso! Aguarde a aprovação do administrador.", category="success")
+                return Redirect(path="/auth/login", status_code=HTTP_302_FOUND)
+
             # Create registration request
             registration_request = RegistrationRequestModel(
                 username=username,
@@ -154,6 +174,7 @@ class AuthController(Controller):
         except Exception as e:
             flash(request, f"Erro ao criar solicitação de registro: {str(e)}", category="error")
             return HTMXTemplate(template_name="register.html")
+        
 
     @post(path="/logout")
     async def logout(self, request: HTMXRequest) -> Redirect:

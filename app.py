@@ -64,6 +64,7 @@ def to_local_time(dt: datetime, fmt: str = '%d/%m/%Y %H:%M', tz: str = "America/
     local_dt = dt.astimezone(ZoneInfo(tz))
     return local_dt.strftime(fmt)
 
+
 # Create Jinja2 engine instance with custom filters
 jinja_engine = JinjaTemplateEngine(directory=Path("templates"))
 jinja_engine.engine.filters["to_local_time"] = to_local_time
@@ -71,11 +72,14 @@ jinja_engine.engine.filters["to_local_time"] = to_local_time
 # Template Configuration
 template_config = TemplateConfig(
     directory=Path("templates"),
-    engine=JinjaTemplateEngine,
+    engine=jinja_engine,
 )
 
 # Statics Files Configuration
 statics = create_static_files_router(path="/static", directories=[Path("static")])
+
+# Flash Messages Configuration
+flash_config = FlashConfig(template_config=template_config)
 
 # Routes
 index_dependencies = providers.create_service_dependencies(
@@ -111,18 +115,12 @@ def permission_denied_handler(request: Request, exc: PermissionDeniedException) 
     return Redirect(path=referer, status_code=HTTP_302_FOUND)
 
 
-# Flash Messages Configuration
-flash_config = FlashConfig(template_config=template_config)
-
 # Application
 app = Litestar(
     route_handlers=[index, statics, UserController, EventController, ParticipantController, AuthController, OccurrenceController, RegistrationController],
     plugins=[alchemy_plugin, HTMXPlugin(), FlashPlugin(flash_config)],
     middleware=[session_middleware],
-    template_config=TemplateConfig(
-        directory=Path("templates"),
-        engine=jinja_engine,
-    ),
+    template_config=template_config,
     request_class=HTMXRequest,
     exception_handlers={PermissionDeniedException: permission_denied_handler},
     debug=True,  # Enable debug mode

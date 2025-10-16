@@ -184,7 +184,7 @@ class RegistrationController(Controller):
         request: HTMXRequest,
         request_id: int,
         registration_service: RegistrationService,
-    ) -> Template | Redirect:
+    ) -> Template:
         """Update registration request details before approval (admin only)."""
         require_profiles(request, ["admin"])
 
@@ -194,21 +194,17 @@ class RegistrationController(Controller):
 
             if not registration_request:
                 flash(request, "Solicitação de registro não encontrada", category="error")
-                if request.htmx:
-                    return HTMXTemplate(
-                        template_name="registration_edit.html",
-                        context={"registration_request": None}
-                    )
-                return Redirect(path="/registrations", status_code=HTTP_302_FOUND)
+                return HTMXTemplate(
+                    template_name="registration_edit.html",
+                    context={"registration_request": None}
+                )
 
             if registration_request.status != "pending":
                 flash(request, "Apenas solicitações pendentes podem ser editadas", category="warning")
-                if request.htmx:
-                    return HTMXTemplate(
-                        template_name="registration_edit.html",
-                        context={"registration_request": registration_request}
-                    )
-                return Redirect(path="/registrations", status_code=HTTP_302_FOUND)
+                return HTMXTemplate(
+                    template_name="registration_edit.html",
+                    context={"registration_request": registration_request}
+                )
 
             # Get form data
             form_data = await request.form()
@@ -225,24 +221,22 @@ class RegistrationController(Controller):
                 registration_request.username = username
             if email:
                 registration_request.email = email
-            registration_request.profile = profile
+            if profile is not None:
+                registration_request.profile = profile
 
             await registration_service.repository.session.commit()
 
             flash(request, "Solicitação atualizada com sucesso", category="success")
 
-            if request.htmx:
-                return HTMXTemplate(
-                    template_name="registration_edit.html",
-                    context={"registration_request": registration_request}
-                )
-            return Redirect(path=f"/registrations/{request_id}", status_code=HTTP_302_FOUND)
+            # Always return the template for HTMX requests to show flash messages
+            return HTMXTemplate(
+                template_name="registration_edit.html",
+                context={"registration_request": registration_request}
+            )
 
         except Exception as e:
             flash(request, f"Erro ao atualizar solicitação: {str(e)}", category="error")
-            if request.htmx:
-                return HTMXTemplate(
-                    template_name="registration_edit.html",
-                    context={"registration_request": registration_request}
-                )
-            return Redirect(path=f"/registrations/{request_id}", status_code=HTTP_302_FOUND)
+            return HTMXTemplate(
+                template_name="registration_edit.html",
+                context={"registration_request": registration_request}
+            )

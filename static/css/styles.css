@@ -351,7 +351,7 @@ button:hover {
 }
 
 .btn-edit:hover {
-    border-color: #f5ef9f;
+    border-color: #ffc107;
 }
 
 .btn-delete {
@@ -453,7 +453,7 @@ button:hover {
 }
 
 /* Hover effects */
-.list-card .btn-small:hover {
+.btn-small:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }

@@ -6,14 +6,99 @@
   <h2>📅 Eventos</h2>
   {% set user_profile = request.session.get('profile') %}
   {% if user_profile in ['admin', 'organizer'] %}
-  <button class="btn-primary" hx-get="/events/new" hx-target="#content" hx-swap="innerHTML">
+  <button class="btn-primary" hx-get="/events/new" hx-target="body" hx-swap="outerHTML">
     ➕ Novo Evento
   </button>
   {% endif %}
 </div>
 
 <div id="content">
-  {% include "event_list_content.html" %}
+  {% if has_events %}
+  <div class="list-grid">
+    {% for event in events %}
+    <div class="list-card">
+      <div class="list-info">
+        <h3>{{ event.name }}</h3>
+        
+        <div class="list-type {{ 'recurring' if event.is_recurring else 'single' }}">
+          {% if event.is_recurring %}
+            🔄 Recorrente
+          {% else %}
+            📅 Evento Único
+          {% endif %}
+        </div>
+        
+        {% if event.description %}
+        <div class="list-description">
+          {{ event.description }}
+        </div>
+        {% endif %}
+        
+        <div class="list-details">
+          {% if event.is_recurring %}
+            {% if event.recurrence_start_date and event.recurrence_end_date %}
+            <div><strong>Período:</strong> {{ event.recurrence_start_date.strftime('%d/%m/%Y') }} até {{ event.recurrence_end_date.strftime('%d/%m/%Y') }}</div>
+            {% endif %}
+            {% if event.recurrence_rule and event.recurrence_rule.weekdays %}
+            <div><strong>Dias da semana:</strong>
+              {% for day in event.recurrence_rule.weekdays %}
+                {% if day == '0' %}Seg{% elif day == '1' %}Ter{% elif day == '2' %}Qua{% elif day == '3' %}Qui{% elif day == '4' %}Sex{% elif day == '5' %}Sáb{% elif day == '6' %}Dom{% endif %}{% if not loop.last %}, {% endif %}
+              {% endfor %}
+            </div>
+            {% endif %}
+            {% if event.recurrence_rule and event.recurrence_rule.time_windows %}
+            <div><strong>Horários:</strong> {{ event.recurrence_rule.time_windows | join(', ') }}</div>
+            {% endif %}
+          {% else %}
+            {% if event.single_start %}
+            <div><strong>Início:</strong> {{ event.single_start.strftime('%d/%m/%Y às %H:%M') }}</div>
+            {% endif %}
+            {% if event.single_end %}
+            <div><strong>Fim:</strong> {{ event.single_end.strftime('%d/%m/%Y às %H:%M') }}</div>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+      {% if user_profile in ['admin', 'organizer'] %}
+      <div class="list-actions">
+        <button class="btn-small btn-edit"
+                hx-get="/events/{{ event.id }}/edit"
+                hx-target="body"
+                hx-swap="outerHTML">
+          ✏️ Editar
+        </button>
+        <button class="btn-small btn-delete"
+                hx-delete="/events/{{ event.id }}"
+                hx-target="#content"
+                hx-swap="innerHTML"
+                hx-confirm="Tem certeza que deseja excluir este evento?">
+          🗑️ Excluir
+        </button>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if total > events|length %}
+  <div style="text-align: center; margin-top: 2rem; color: #6c757d;">
+    Mostrando {{ events|length }} de {{ total }} eventos
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <h3>📅 Nenhum evento cadastrado</h3>
+    {% if user_profile in ['admin', 'organizer'] %}
+    <p>Comece criando seu primeiro evento clicando no botão "Novo Evento" acima.</p>
+    <button class="btn-primary" hx-get="/events/new" hx-target="#content" hx-swap="innerHTML">
+      ➕ Criar Primeiro Evento
+    </button>
+    {% else %}
+    <p>Nenhum evento disponível no momento.</p>
+    {% endif %}
+  </div>
+  {% endif %}
 </div>
 
 <!-- <div id="modal"></div> -->

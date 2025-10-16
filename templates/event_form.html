@@ -1,16 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Eventos{% endblock %}
 {% block content %}
+
+<div class="action-bar">
+  <h2>📅 Eventos</h2>
+</div>
 
 <div class="modal">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
     <h3 style="margin: 0;">{% if event %}✏️ Editar{% else %} 📅 Novo{% endif %} Evento</h3>
-    <button hx-get="/events" hx-target="#content"
+    <button hx-get="/events" hx-target="body" hx-swap="outerHTML"
       style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6c757d;">
       ✕
     </button>
   </div>
 
   <form {% if event %}hx-patch{% else %}hx-post{% endif %}="/events{% if event %}/{{ event.id }}{% endif %}"
-    hx-target="#content" hx-swap="innerHTML" hx-indicator="#loading">
+    hx-target="body" hx-swap="outerHTML" hx-indicator="#loading">
     <label>
       Nome do Evento
       <input type="text" name="name" value="{{ event.name if event else '' }}" required
@@ -34,13 +40,13 @@
       <label>
         🕐 Data e Hora de Início
         <input type="datetime-local" name="single_start" id="single_start"
-          value="{{ event.single_start.strftime('%Y-%m-%dT%H:%M') if event and event.single_start else '' }}" required
+          value="{{ event.single_start.strftime('%Y-%m-%dT%H:%M') if event and event.single_start else '' }}" {% if not event or not event.is_recurring %}required{% endif %}
           onchange="validateSingleDates()">
       </label>
       <label>
         🕐 Data e Hora de Fim
         <input type="datetime-local" name="single_end" id="single_end"
-          value="{{ event.single_end.strftime('%Y-%m-%dT%H:%M') if event and event.single_end else '' }}" required
+          value="{{ event.single_end.strftime('%Y-%m-%dT%H:%M') if event and event.single_end else '' }}" {% if not event or not event.is_recurring %}required{% endif %}
           onchange="validateSingleDates()">
       </label>
     </div>
@@ -118,15 +124,13 @@
 
   // Initialize form based on existing event
   document.body.addEventListener('htmx:afterSwap', function (evt) {
-    if (evt.detail.target.id === 'content') {
-      // Use setTimeout to ensure DOM is fully rendered
-      setTimeout(() => {
-        const isRecurringCheckbox = document.getElementById('is_recurring');
-        if (isRecurringCheckbox && isRecurringCheckbox.checked) {
-          toggleRecurrence(isRecurringCheckbox);
-        }
-      }, 10);
-    }
+    // Use setTimeout to ensure DOM is fully rendered
+    setTimeout(() => {
+      const isRecurringCheckbox = document.getElementById('is_recurring');
+      if (isRecurringCheckbox && isRecurringCheckbox.checked) {
+        toggleRecurrence(isRecurringCheckbox);
+      }
+    }, 10);
   });
 
   // Also initialize on DOMContentLoaded for direct page loads
@@ -177,11 +181,9 @@
 
   // Auto-close modal on successful submission
   document.body.addEventListener('htmx:afterSwap', function (evt) {
-    if (evt.detail.target.id === 'content') {
-      const modal = document.getElementById('modal');
-      if (modal) {
-        document.getElementById('modal').innerHTML = '';
-      }
+    const modal = document.getElementById('modal');
+    if (modal) {
+      document.getElementById('modal').innerHTML = '';
     }
   });
 </script>

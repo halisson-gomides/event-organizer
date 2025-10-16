@@ -6,14 +6,68 @@
   <h2>👥 Participantes</h2>
   {% set user_profile = request.session.get('profile') %}
   {% if user_profile in ['admin', 'organizer'] %}
-  <button class="btn-primary" hx-get="/participants/new" hx-target="#content" hx-swap="innerHTML">
+  <button class="btn-primary" hx-get="/participants/new" hx-target="body" hx-swap="outerHTML">
     ➕ Novo Participante
   </button>
   {% endif %}
 </div>
 
 <div id="content">
-  {% include "participant_list_content.html" %}
+ {% if has_participants %}
+    <div class="list-grid">
+      {% for p in participants %}
+        <div class="list-card">
+          <div class="list-info">
+            <h3>{{ p.full_name }}</h3>
+            <div class="list-type {{ 'adult' if p.age_on(now) > 18 else 'kid' }}">
+              {% if p.age_on(now) > 18 %}
+                <i class="fa-solid fa-user"></i> Adulto
+              {% else %}
+                <i class="fas fa-child"></i> Criança
+              {% endif %}
+            </div>
+            <p><strong>Nascimento:</strong> {{ p.birth_date.strftime('%d/%m/%Y') }}</p>
+            <p><strong>Idade:</strong> {{ p.age_on(now) if now else 'N/A' }} anos</p>
+            {% if p.phone %}
+              <p><strong>Telefone:</strong> {{ p.phone }}</p>
+            {% endif %}
+            {% if p.guardian %}
+              <p><strong>Responsável:</strong> {{ p.guardian.full_name }}</p>
+            {% endif %}
+            {% if p.observations %}
+              <p><strong>Observações:</strong> {{ p.observations }}</p>
+            {% endif %}
+          </div>
+          {% if user_profile in ['admin', 'organizer'] %}
+          <div class="list-actions">
+            <button class="btn-small btn-edit"
+                    hx-get="/participants/{{ p.id }}/edit"
+                    hx-target="#content"
+                    hx-swap="innerHTML">
+              ✏️ Editar
+            </button>
+            <button class="btn-small btn-delete"
+                    hx-delete="/participants/{{ p.id }}"
+                    hx-target="#content"
+                    hx-swap="innerHTML"
+                    hx-confirm="Tem certeza que deseja excluir {{ p.full_name }}?">
+              🗑️ Excluir
+            </button>
+          </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>Nenhum participante cadastrado.</p>
+      {% if user_profile in ['admin', 'organizer'] %}
+      <button class="btn-primary" hx-get="/participants/new" hx-target="#content" hx-swap="innerHTML">
+        ➕ Cadastrar Primeiro Participante
+      </button>
+      {% endif %}
+    </div>
+  {% endif %}
 </div>
 
 {% endblock %}

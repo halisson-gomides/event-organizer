@@ -42,8 +42,8 @@ class EventController(Controller):
             "has_events": len(events_data.items) > 0
         }
         
-        if request.htmx:
-            return HTMXTemplate(template_name="event_list_content.html", context=context)
+        # if request.htmx:
+        #     return HTMXTemplate(template_name="event_list_content.html", context=context)
         return HTMXTemplate(template_name="event_list.html", context=context)
     
 
@@ -238,7 +238,7 @@ class EventController(Controller):
                 "has_events": len(events_data.items) > 0
             }
 
-            return HTMXTemplate(template_name="event_list_content.html", context=context)
+            return HTMXTemplate(template_name="event_list.html", context=context)
 
         except Exception as e:
             # Flash error message

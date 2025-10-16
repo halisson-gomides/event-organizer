@@ -54,14 +54,14 @@
           {% if req.status == 'pending' %}
             <button class="btn-small"
                     hx-get="/registrations/{{ req.id }}"
-                    hx-target="#content"
+                    hx-target="body"
                     hx-swap="innerHTML">
               ✏️ Revisar
             </button>
           {% else %}
             <button class="btn-small"
                     hx-get="/registrations/{{ req.id }}"
-                    hx-target="#content"
+                    hx-target="body"
                     hx-swap="innerHTML">
               Ver Detalhes
             </button>

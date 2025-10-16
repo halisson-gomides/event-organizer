@@ -1,16 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Eventos{% endblock %}
 {% block content %}
+
+<div class="action-bar">
+  <h2>👥 Participantes</h2>
+</div>
 
 <div class="modal">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
     <h3 style="margin: 0;">{% if participant %}✏️ Editar{% else %}👤 Novo{% endif %} Participante</h3>
-    <button hx-get="/participants" hx-target="#content"
+    <button hx-get="/participants" hx-target="body" hx-swap="outerHTML"
       style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6c757d;">
       ✕
     </button>
   </div>
 
   <form {% if participant %}hx-patch{% else %}hx-post{% endif
-    %}="/participants{% if participant %}/{{ participant.id }}{% endif %}" hx-target="#content" hx-swap="innerHTML"
+    %}="/participants{% if participant %}/{{ participant.id }}{% endif %}" hx-target="body" hx-swap="outerHTML"
     hx-indicator="#loading">
 
     <label>

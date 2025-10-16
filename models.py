@@ -132,6 +132,7 @@ class UserModel(base.DefaultBase):
         from passlib.hash import bcrypt
         self.password_hash = bcrypt.hash(raw_password)
 
+
 class RegistrationRequestModel(base.DefaultBase):
     __tablename__ = "registration_requests"
 

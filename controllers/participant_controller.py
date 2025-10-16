@@ -42,15 +42,15 @@ class ParticipantController(Controller):
             "now": datetime.now().date()
         }
         
-        if request.htmx:
-            return HTMXTemplate(template_name="participant_list_content.html", context=context)
+        # if request.htmx:
+        #     return HTMXTemplate(template_name="participant_list_content.html", context=context)
         return HTMXTemplate(template_name="participant_list.html", context=context)
     
 
     @get(path="/participants/new")
     async def new_participant_form(self, request: Request, participants_service: ParticipantService) -> Template:
         """Render the participant creation form."""
-        require_profiles(request, ["Administrador", "Organizador"])
+        require_profiles(request, ["admin", "organizer"])
         # Get potential guardians (adults)
 
         today = date.today()
@@ -73,7 +73,7 @@ class ParticipantController(Controller):
         participants_service: ParticipantService,
     ) -> Template:
         """Create a new participant."""
-        require_profiles(request, ["Administrador", "Organizador"])
+        require_profiles(request, ["admin", "organizer"])
         try:
             # Get form data from request
             form_data = await request.form()
@@ -103,7 +103,7 @@ class ParticipantController(Controller):
             participant_data = ParticipantCreate(**form_dict)
 
             obj = await participants_service.create(participant_data)
-            flash(request, f"Participante {obj.full_name} criado com sucesso!", category="success")
+            flash(request, f"Participante criado com sucesso!", category="success")
             
             # Return updated participant list
             results, total = await participants_service.list_and_count()
@@ -113,7 +113,7 @@ class ParticipantController(Controller):
                 "has_participants": total > 0,
                 "now": datetime.now().date()
             }
-            return HTMXTemplate(template_name="participant_list_content.html", context=context)
+            return HTMXTemplate(template_name="participant_list.html", context=context)
             
         except Exception as e:
             flash(request, f"Erro ao criar participante: {str(e)}", category="error")
@@ -201,7 +201,7 @@ class ParticipantController(Controller):
             participant_data = ParticipantUpdate(**form_dict)
 
             obj = await participants_service.update(participant_data, item_id=participant_id, auto_commit=True)
-            flash(request, f"Participante {obj.full_name} atualizado com sucesso!", category="success")
+            flash(request, f"Participante atualizado com sucesso!", category="success")
 
             # Return updated participant list
             results, total = await participants_service.list_and_count()
@@ -248,7 +248,7 @@ class ParticipantController(Controller):
             participant_name = participant.full_name
             await participants_service.delete(participant_id)
             
-            flash(request, f"Participante {participant_name} excluído com sucesso!", category="success")
+            flash(request, f"{participant_name} excluído com sucesso!", category="success")
             
         except Exception as e:
             flash(request, f"Erro ao excluir participante: {str(e)}", category="error")
