@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Check-in / Check-out{% endblock %}
+{% block content %}
+
+<div class="action-bar">
+  <h2>✅ Check-in / Check-out</h2>
+</div>
+
+<div id="content">
+  {% if occurrences %}
+    <div class="list-grid">
+      {% for occ in occurrences %}
+        <div class="list-card">
+          <div class="list-info">
+            <h3>{{ occ.event.name }}</h3>
+            
+            <div class="list-type {{ occ.status }}">
+              {% if occ.status == 'checkin_available' %}
+                ✅ Check-in Disponível
+              {% elif occ.status == 'checkin_closed' %}
+                ❌ Check-in Fechado
+              {% elif occ.status == 'checkout_available' %}
+                ✔️ Check-out Disponível
+              {% elif occ.status == 'checkout_closed' %}
+                ❌ Check-out Fechado
+              {% elif occ.status == 'event_ended' %}
+                ⏹️ Evento Finalizado
+              {% elif occ.status == 'event_not_started' %}
+                ⏳ Evento Não Iniciado
+              {% endif %}
+            </div>
+            
+            {% if occ.event.description %}
+            <div class="list-description">
+              {{ occ.event.description }}
+            </div>
+            {% endif %}
+            
+            <div class="list-details">
+              <div><strong>Início:</strong> {{ occ.start_at|to_local_time }}</div>
+              <div><strong>Fim:</strong> {{ occ.end_at|to_local_time }}</div>
+              
+              {% if occ.checkin_window %}
+              <div style="background-color: #e8f5e9; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem;">
+                <strong>🕐 Janela de Check-in:</strong>
+                <div>Abre: {{ occ.checkin_window.open|to_local_time }}</div>
+                <div>Fecha: {{ occ.checkin_window.close|to_local_time }}</div>
+              </div>
+              {% endif %}
+              
+              {% if occ.checkout_window %}
+              <div style="background-color: #e3f2fd; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem;">
+                <strong>🕐 Janela de Check-out:</strong>
+                <div>Abre: {{ occ.checkout_window.open|to_local_time }}</div>
+                <div>Fecha: {{ occ.checkout_window.close|to_local_time }}</div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          
+          <div class="list-actions">
+            {% if occ.can_checkin %}
+              <button class="btn-small"
+                      hx-get="/occurrences/{{ occ.id }}/checkin"
+                      hx-target="body"
+                      hx-swap="outerHTML">
+                ✅ Check-in
+              </button>
+            {% else %}
+              <button class="btn-small" disabled style="opacity: 0.5; cursor: not-allowed;">
+                ✅ Check-in
+              </button>
+            {% endif %}
+            
+            {% if occ.can_checkout %}
+              <button class="btn-small"
+                      hx-get="/occurrences/{{ occ.id }}/checkout"
+                      hx-target="body"
+                      hx-swap="outerHTML">
+                ✔️ Check-out
+              </button>
+            {% else %}
+              <button class="btn-small" disabled style="opacity: 0.5; cursor: not-allowed;">
+                ✔️ Check-out
+              </button>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>📭 Nenhuma ocorrência disponível</h3>
+      <p>Não há ocorrências de eventos no momento.</p>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

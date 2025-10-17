@@ -9,5 +9,6 @@ load_dotenv()
 class Settings:
     database_url: str = os.getenv("DATABASE_URL")
     secret_key: str = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
+    timezone: str = os.getenv("TZ", "America/Sao_Paulo")
 
 settings = Settings()

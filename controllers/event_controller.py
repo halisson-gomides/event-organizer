@@ -1,5 +1,6 @@
 from typing import Annotated
 from datetime import datetime, date
+from zoneinfo import ZoneInfo
 
 from litestar import Controller, get, post, patch, delete, Request
 from litestar.params import Dependency, Parameter, Body
@@ -12,6 +13,7 @@ from services.event_service import EventService
 from schemas import EventRead, EventCreate, EventUpdate
 from models import EventModel
 from middleware import require_profiles
+from config import settings
 
 
 class EventController(Controller):
@@ -80,11 +82,23 @@ class EventController(Controller):
             # Handle datetime fields for single events
             single_start = form_data.get("single_start")
             if single_start:
-                form_dict["single_start"] = datetime.fromisoformat(single_start)
-            
+                # Parse as local time and convert to UTC for storage
+                local_dt = datetime.fromisoformat(single_start)
+                if local_dt.tzinfo is None:
+                    # Assume local timezone if naive
+                    local_dt = local_dt.replace(tzinfo=ZoneInfo(settings.timezone))
+                utc_dt = local_dt.astimezone(ZoneInfo("UTC"))
+                form_dict["single_start"] = utc_dt
+
             single_end = form_data.get("single_end")
             if single_end:
-                form_dict["single_end"] = datetime.fromisoformat(single_end)
+                # Parse as local time and convert to UTC for storage
+                local_dt = datetime.fromisoformat(single_end)
+                if local_dt.tzinfo is None:
+                    # Assume local timezone if naive
+                    local_dt = local_dt.replace(tzinfo=ZoneInfo(settings.timezone))
+                utc_dt = local_dt.astimezone(ZoneInfo("UTC"))
+                form_dict["single_end"] = utc_dt
                 
             # Handle date fields for recurring events
             recurrence_start_date = form_data.get("recurrence_start_date")
@@ -117,6 +131,9 @@ class EventController(Controller):
             
             obj = await events_service.create(event_data)
             
+            # Generate occurrences for the event
+            await events_service.generate_occurrences(obj, events_service.repository.session)
+            
             # Flash success message
             flash(request, "Evento criado com sucesso!", category="success")
             
@@ -130,7 +147,7 @@ class EventController(Controller):
                 "has_events": len(events_data.items) > 0
             }
             
-            return HTMXTemplate(template_name="event_list_content.html", context=context)
+            return HTMXTemplate(template_name="event_list.html", context=context)
             
         except Exception as e:
             # Flash error message
@@ -189,11 +206,23 @@ class EventController(Controller):
             # Handle datetime fields for single events
             single_start = form_data.get("single_start")
             if single_start:
-                form_dict["single_start"] = datetime.fromisoformat(single_start)
+                # Parse as local time and convert to UTC for storage
+                local_dt = datetime.fromisoformat(single_start)
+                if local_dt.tzinfo is None:
+                    # Assume local timezone if naive
+                    local_dt = local_dt.replace(tzinfo=ZoneInfo(settings.timezone))
+                utc_dt = local_dt.astimezone(ZoneInfo("UTC"))
+                form_dict["single_start"] = utc_dt
 
             single_end = form_data.get("single_end")
             if single_end:
-                form_dict["single_end"] = datetime.fromisoformat(single_end)
+                # Parse as local time and convert to UTC for storage
+                local_dt = datetime.fromisoformat(single_end)
+                if local_dt.tzinfo is None:
+                    # Assume local timezone if naive
+                    local_dt = local_dt.replace(tzinfo=ZoneInfo(settings.timezone))
+                utc_dt = local_dt.astimezone(ZoneInfo("UTC"))
+                form_dict["single_end"] = utc_dt
 
             # Handle date fields for recurring events
             recurrence_start_date = form_data.get("recurrence_start_date")
@@ -224,6 +253,9 @@ class EventController(Controller):
             event_data = EventUpdate(**form_dict)
 
             obj = await events_service.update(event_data, item_id=event_id, auto_commit=True)
+
+            # Regenerate occurrences for the updated event
+            await events_service.generate_occurrences(obj, events_service.repository.session)
 
             # Flash success message
             flash(request, "Evento atualizado com sucesso!", category="success")
@@ -278,7 +310,7 @@ class EventController(Controller):
                 "has_events": len(events_data.items) > 0
             }
             
-            return HTMXTemplate(template_name="event_list_content.html", context=context)
+            return HTMXTemplate(template_name="event_list.html", context=context)
             
         except Exception as e:
             # Flash error message
@@ -294,4 +326,4 @@ class EventController(Controller):
                 "has_events": len(events_data.items) > 0
             }
             
-            return HTMXTemplate(template_name="event_list_content.html", context=context)
+            return HTMXTemplate(template_name="event_list.html", context=context)

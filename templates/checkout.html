@@ -1,32 +1,42 @@
 {% extends "base.html" %}
 {% block title %}Checkout{% endblock %}
 {% block content %}
-<h2>Checkout — {{ occurrence.start_at }} a {{ occurrence.end_at }}</h2>
+<h2>Checkout — {{ occurrence.start_at|to_local_time }} a {{ occurrence.end_at|to_local_time }}</h2>
 
-{% if checkout_ok %}
-  <div class="ok">Checkout realizado com sucesso.</div>
-{% endif %}
+<div class="checkout-form">
+  {% if checkout_ok %}
+    <div class="ok">Checkout realizado com sucesso.</div>
+  {% endif %}
 
-{% if error %}
-  <div class="error">{{ error }}</div>
-{% endif %}
+  {% if error %}
+    <div class="error">{{ error }}</div>
+  {% endif %}
 
-<form hx-post="/occurrences/{{ occurrence.id }}/checkout" hx-target="this" hx-swap="outerHTML">
-  <label>Participante:
-    <select name="participant_id" required>
-      {% for p in participants %}
-        <option value="{{ p.id }}">{{ p.full_name }} ({{ p.birth_date }})</option>
-      {% endfor %}
-    </select>
-  </label><br>
-  <label>Quem está realizando o checkout:
-    <select name="checkout_by_participant_id" required>
-      {% for p in participants %}
-        <option value="{{ p.id }}">{{ p.full_name }} ({{ p.birth_date }})</option>
-      {% endfor %}
-    </select>
-  </label><br>
-  <label>Código (exigido para crianças): <input type="text" name="code"></label><br>
-  <button type="submit">Checkout</button>
-</form>
+  <form hx-post="/occurrences/{{ occurrence.id }}/checkout" hx-target="this" hx-swap="outerHTML">
+    <div class="form-group">
+      <label>Participante:
+        <select name="participant_id" required>
+          {% for p in participants %}
+            <option value="{{ p.id }}">{{ p.full_name }} ({{ p.birth_date.strftime('%d/%m/%Y') }})</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <div class="form-group">
+      <label>Quem está realizando o checkout:
+        <select name="checkout_by_participant_id" required>
+          {% for p in participants %}
+            <option value="{{ p.id }}">{{ p.full_name }} ({{ p.birth_date|date:'d/m/Y' }})</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <div class="form-group">
+      <label>Código (exigido para crianças): <input type="text" name="code"></label>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">Checkout</button>
+    </div>
+  </form>
+</div>
 {% endblock %}

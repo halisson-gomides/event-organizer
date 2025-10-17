@@ -51,10 +51,10 @@
             {% endif %}
           {% else %}
             {% if event.single_start %}
-            <div><strong>Início:</strong> {{ event.single_start.strftime('%d/%m/%Y às %H:%M') }}</div>
+            <div><strong>Início:</strong> {{ event.single_start|to_local_time('%d/%m/%Y às %H:%M') }}</div>
             {% endif %}
             {% if event.single_end %}
-            <div><strong>Fim:</strong> {{ event.single_end.strftime('%d/%m/%Y às %H:%M') }}</div>
+            <div><strong>Fim:</strong> {{ event.single_end|to_local_time('%d/%m/%Y às %H:%M') }}</div>
             {% endif %}
           {% endif %}
         </div>
@@ -69,8 +69,8 @@
         </button>
         <button class="btn-small btn-delete"
                 hx-delete="/events/{{ event.id }}"
-                hx-target="#content"
-                hx-swap="innerHTML"
+                hx-target="body"
+                hx-swap="outerHTML"
                 hx-confirm="Tem certeza que deseja excluir este evento?">
           🗑️ Excluir
         </button>
@@ -91,7 +91,7 @@
     <h3>📅 Nenhum evento cadastrado</h3>
     {% if user_profile in ['admin', 'organizer'] %}
     <p>Comece criando seu primeiro evento clicando no botão "Novo Evento" acima.</p>
-    <button class="btn-primary" hx-get="/events/new" hx-target="#content" hx-swap="innerHTML">
+    <button class="btn-primary" hx-get="/events/new" hx-target="body" hx-swap="outerHTML">
       ➕ Criar Primeiro Evento
     </button>
     {% else %}

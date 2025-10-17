@@ -42,14 +42,14 @@
           <div class="list-actions">
             <button class="btn-small btn-edit"
                     hx-get="/participants/{{ p.id }}/edit"
-                    hx-target="#content"
-                    hx-swap="innerHTML">
+                    hx-target="body"
+                    hx-swap="outerHTML">
               ✏️ Editar
             </button>
             <button class="btn-small btn-delete"
                     hx-delete="/participants/{{ p.id }}"
-                    hx-target="#content"
-                    hx-swap="innerHTML"
+                    hx-target="body"
+                    hx-swap="outerHTML"
                     hx-confirm="Tem certeza que deseja excluir {{ p.full_name }}?">
               🗑️ Excluir
             </button>
@@ -62,7 +62,7 @@
     <div class="empty-state">
       <p>Nenhum participante cadastrado.</p>
       {% if user_profile in ['admin', 'organizer'] %}
-      <button class="btn-primary" hx-get="/participants/new" hx-target="#content" hx-swap="innerHTML">
+      <button class="btn-primary" hx-get="/participants/new" hx-target="body" hx-swap="outerHTML">
         ➕ Cadastrar Primeiro Participante
       </button>
       {% endif %}

@@ -25,8 +25,8 @@
     <nav>
       📅<a href="/events">Eventos</a>|
       👥<a href="/participants">Participantes</a>|
-      ✅<a href="/checkin">Check-in</a>|
-      ✔️<a href="/events">Check-out</a>
+      ✅<a href="/occurrences/checkin-checkout">Check-in</a>|
+      ✔️<a href="/occurrences/checkin-checkout">Check-out</a>
       {% if request.session.get('user_id') %}
         {% if request.session.get('profile') == 'admin' %}
           | 📋<a href="/registrations">Registros</a>

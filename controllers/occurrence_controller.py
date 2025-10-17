@@ -1,7 +1,8 @@
 from typing import Annotated
 import secrets
 import hashlib
-from datetime import datetime
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from litestar import Controller, get, post, Request
 from litestar.params import Parameter
@@ -14,6 +15,7 @@ from services.attendance_service import AttendanceService
 from services.participant_service import ParticipantService
 from models import EventOccurrenceModel, AttendanceModel, ParticipantModel
 from middleware import require_profiles
+from config import settings
 
 
 class OccurrenceController(Controller):
@@ -50,6 +52,157 @@ class OccurrenceController(Controller):
         }
     
 
+    def _is_checkin_available(self, occurrence: EventOccurrenceModel) -> bool:
+        """Check if check-in window is open for this occurrence.
+
+        Check-in opens 2 hours before event starts and closes 40 minutes before event ends.
+        """
+        # Get current time in the same timezone as the event
+        if occurrence.start_at.tzinfo:
+            now = datetime.now(occurrence.start_at.tzinfo)
+        else:
+            # If no timezone info, assume UTC and convert to local timezone
+            now = datetime.now(ZoneInfo("UTC")).astimezone(ZoneInfo(settings.timezone))
+
+        # Check-in opens 2 hours before start
+        checkin_open = occurrence.start_at - timedelta(hours=2)
+        # Check-in closes 40 minutes before end
+        checkin_close = occurrence.end_at - timedelta(minutes=40)
+
+        return checkin_open <= now <= checkin_close
+    
+
+    def _is_checkout_available(self, occurrence: EventOccurrenceModel) -> bool:
+        """Check if check-out window is open for this occurrence.
+
+        Check-out can only be done after event starts and before it ends.
+        """
+        # Get current time in the same timezone as the event
+        if occurrence.start_at.tzinfo:
+            now = datetime.now(occurrence.start_at.tzinfo)
+        else:
+            # If no timezone info, assume UTC and convert to local timezone
+            now = datetime.now(ZoneInfo("UTC")).astimezone(ZoneInfo(settings.timezone))
+
+        # Check-out opens when event starts
+        checkout_open = occurrence.start_at
+        # Check-out closes when event ends
+        checkout_close = occurrence.end_at
+
+        return checkout_open <= now <= checkout_close
+    
+
+    def _get_occurrence_status(self, occurrence: EventOccurrenceModel) -> dict:
+        """Get current status of occurrence for check-in/check-out.
+
+        Returns dict with:
+        - checkin_available: bool
+        - checkout_available: bool
+        - checkin_opens_at: datetime
+        - checkin_closes_at: datetime
+        - checkout_opens_at: datetime
+        - checkout_closes_at: datetime
+        - status_text: str (human-readable status)
+        - status: str (CSS class status)
+        """
+        checkin_opens = occurrence.start_at - timedelta(hours=2)
+        checkin_closes = occurrence.end_at - timedelta(minutes=40)
+        checkout_opens = occurrence.start_at
+        checkout_closes = occurrence.end_at
+
+        # Get current time in the same timezone as the event
+        if occurrence.start_at.tzinfo:
+            now = datetime.now(occurrence.start_at.tzinfo)
+        else:
+            # If no timezone info, assume UTC and convert to local timezone
+            now = datetime.now(ZoneInfo("UTC")).astimezone(ZoneInfo(settings.timezone))
+
+        checkin_available = self._is_checkin_available(occurrence)
+        checkout_available = self._is_checkout_available(occurrence)
+
+        # Determine status text and CSS class
+        if now < checkin_opens:
+            status_text = "Check-in abre em breve"
+            status = "event_not_started"
+        elif now > checkout_closes:
+            status_text = "Evento finalizado"
+            status = "event_ended"
+        elif checkin_available:
+            status_text = "Check-in disponível"
+            status = "checkin_available"
+        elif checkout_available:
+            status_text = "Check-out disponível"
+            status = "checkout_available"
+        else:
+            status_text = "Check-in fechado"
+            status = "checkin_closed"
+
+        return {
+            "checkin_available": checkin_available,
+            "checkout_available": checkout_available,
+            "checkin_opens_at": checkin_opens,
+            "checkin_closes_at": checkin_closes,
+            "checkout_opens_at": checkout_opens,
+            "checkout_closes_at": checkout_closes,
+            "status_text": status_text,
+            "status": status,
+        }
+
+
+    @get(path="/checkin-checkout")
+    async def list_occurrences_for_checkin_checkout(
+        self,
+        request: Request,
+        occurrences_service: OccurrenceService,
+    ) -> Template:
+        """List all occurrences with check-in/check-out availability status."""
+        require_profiles(request, ["admin", "organizer", "volunteer"])
+        
+        try:
+            # Sort occurrences by start_at descending (most recent first)
+            from sqlalchemy import desc
+            occurrences, _ = await occurrences_service.list_and_count(order_by=[desc(EventOccurrenceModel.start_at)])
+            
+            # Add status information to each occurrence
+            occurrences_with_status = []
+            for occurrence in occurrences:
+                status = self._get_occurrence_status(occurrence)
+                # Create a dynamic object with status attributes
+                occurrence_with_status = type('OccurrenceWithStatus', (), {
+                    'id': occurrence.id,
+                    'event': occurrence.event,
+                    'start_at': occurrence.start_at,
+                    'end_at': occurrence.end_at,
+                    'status': status['status'],
+                    'can_checkin': status['checkin_available'],
+                    'can_checkout': status['checkout_available'],
+                    'checkin_window': {
+                        'open': status['checkin_opens_at'],
+                        'close': status['checkin_closes_at']
+                    } if status['checkin_opens_at'] and status['checkin_closes_at'] else None,
+                    'checkout_window': {
+                        'open': status['checkout_opens_at'],
+                        'close': status['checkout_closes_at']
+                    } if status['checkout_opens_at'] and status['checkout_closes_at'] else None,
+                })()
+                occurrences_with_status.append(occurrence_with_status)
+
+            context = {
+                "occurrences": occurrences_with_status,
+                "has_occurrences": len(occurrences_with_status) > 0
+            }
+            
+            return HTMXTemplate(template_name="checkin_checkout_selection.html", context=context)
+        
+        except Exception as e:
+            flash(request, f"Erro ao listar ocorrências: {str(e)}", category="error")
+            context = {
+                "occurrences_with_status": [],
+                "has_occurrences": False
+            }
+            return HTMXTemplate(template_name="checkin_checkout_selection.html", context=context)
+
+
     @get(path="/{occurrence_id:int}/checkin")
     async def checkin_form(
         self,
@@ -63,14 +216,40 @@ class OccurrenceController(Controller):
     ) -> Template:
         """Render the check-in form."""
         require_profiles(request, ["admin", "organizer", "volunteer"])
-        base_context = await self._get_base_context(occurrence_id, occurrences_service, participants_service)
-        context = {
-            **base_context,
-            "checkin_ok": False,
-            "error": None,
-            "code": None
-        }
-        return HTMXTemplate(template_name="checkin.html", context=context)
+        
+        try:
+            base_context = await self._get_base_context(occurrence_id, occurrences_service, participants_service)
+            occurrence = base_context["occurrence"]
+            
+            # Check if check-in is available
+            if not self._is_checkin_available(occurrence):
+                status = self._get_occurrence_status(occurrence)
+                context = {
+                    **base_context,
+                    "checkin_ok": False,
+                    "error": f"Check-in não está disponível. {status['status_text']}",
+                    "code": None
+                }
+                return HTMXTemplate(template_name="checkin.html", context=context)
+            
+            context = {
+                **base_context,
+                "checkin_ok": False,
+                "error": None,
+                "code": None
+            }
+            return HTMXTemplate(template_name="checkin.html", context=context)
+        
+        except Exception as e:
+            flash(request, f"Erro ao carregar formulário de check-in: {str(e)}", category="error")
+            context = {
+                "occurrence": None,
+                "participants": [],
+                "checkin_ok": False,
+                "error": f"Erro: {str(e)}",
+                "code": None
+            }
+            return HTMXTemplate(template_name="checkin.html", context=context)
     
 
     @post(path="/{occurrence_id:int}/checkin")
@@ -103,6 +282,21 @@ class OccurrenceController(Controller):
             participant_id = int(participant_id_str)
 
             occurrence = await occurrences_service.get(occurrence_id)
+            
+            # Validate check-in window
+            if not self._is_checkin_available(occurrence):
+                status = self._get_occurrence_status(occurrence)
+                participant = await participants_service.get(participant_id)
+                participants, _ = await participants_service.list_and_count()
+                context = {
+                    "occurrence": occurrence,
+                    "participants": participants,
+                    "checkin_ok": False,
+                    "error": f"Check-in não está disponível. {status['status_text']}",
+                    "code": None
+                }
+                return HTMXTemplate(template_name="checkin.html", context=context)
+            
             participant = await participants_service.get(participant_id)
             participants, _ = await participants_service.list_and_count()
             
@@ -133,7 +327,7 @@ class OccurrenceController(Controller):
             attendance_data = {
                 "occurrence_id": occurrence_id,
                 "participant_id": participant_id,
-                "checkin_at": datetime.now(),
+                "checkin_at": datetime.now(ZoneInfo("UTC")),
                 "code_hash": code_hash
             }
             
@@ -172,13 +366,37 @@ class OccurrenceController(Controller):
     ) -> Template:
         """Render the check-out form."""
         require_profiles(request, ["admin", "organizer", "volunteer"])
-        base_context = await self._get_base_context(occurrence_id, occurrences_service, participants_service)
-        context = {
-            **base_context,
-            "checkout_ok": False,
-            "error": None
-        }
-        return HTMXTemplate(template_name="checkout.html", context=context)
+        
+        try:
+            base_context = await self._get_base_context(occurrence_id, occurrences_service, participants_service)
+            occurrence = base_context["occurrence"]
+            
+            # Check if check-out is available
+            if not self._is_checkout_available(occurrence):
+                status = self._get_occurrence_status(occurrence)
+                context = {
+                    **base_context,
+                    "checkout_ok": False,
+                    "error": f"Check-out não está disponível. {status['status_text']}"
+                }
+                return HTMXTemplate(template_name="checkout.html", context=context)
+            
+            context = {
+                **base_context,
+                "checkout_ok": False,
+                "error": None
+            }
+            return HTMXTemplate(template_name="checkout.html", context=context)
+        
+        except Exception as e:
+            flash(request, f"Erro ao carregar formulário de check-out: {str(e)}", category="error")
+            context = {
+                "occurrence": None,
+                "participants": [],
+                "checkout_ok": False,
+                "error": f"Erro: {str(e)}"
+            }
+            return HTMXTemplate(template_name="checkout.html", context=context)
 
 
     @post(path="/{occurrence_id:int}/checkout")
@@ -226,6 +444,20 @@ class OccurrenceController(Controller):
             code = form_data.get("code", "").strip()
             
             occurrence = await occurrences_service.get(occurrence_id)
+            
+            # Validate check-out window
+            if not self._is_checkout_available(occurrence):
+                status = self._get_occurrence_status(occurrence)
+                participant = await participants_service.get(participant_id)
+                participants, _ = await participants_service.list_and_count()
+                context = {
+                    "occurrence": occurrence,
+                    "participants": participants,
+                    "checkout_ok": False,
+                    "error": f"Check-out não está disponível. {status['status_text']}"
+                }
+                return HTMXTemplate(template_name="checkout.html", context=context)
+            
             participant = await participants_service.get(participant_id)
             checkout_by = await participants_service.get(checkout_by_participant_id)
             participants, _ = await participants_service.list_and_count()
@@ -278,7 +510,7 @@ class OccurrenceController(Controller):
             
             # Update attendance with checkout info
             update_data = {
-                "checkout_at": datetime.now(),
+                "checkout_at": datetime.now(ZoneInfo("UTC")),
                 "checkout_by_participant_id": checkout_by_participant_id
             }
             
