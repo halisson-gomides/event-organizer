@@ -1,36 +1,101 @@
 {% extends "base.html" %}
 {% block title %}Check-in{% endblock %}
 {% block content %}
-<h2>Check-in — {{ occurrence.start_at|to_local_time }} a {{ occurrence.end_at|to_local_time }}</h2>
+<div class="action-bar">
+  <h2>Check-in — {{ occurrence.event.title }}</h2>
+  <span class="list-type single">{{ occurrence.start_at|to_local_time }} a {{ occurrence.end_at|to_local_time }}</span>
+</div>
 
-<div class="checkin-form">
+<div class="form-container">
   {% if checkin_ok %}
-    <div class="ok">Check-in realizado com sucesso.</div>
+    <div class="flash-message success">
+      ✓ Check-in realizado com sucesso.
+    </div>
     {% if code %}
       <div class="code">
-        Código da criança (apresente no checkout): <strong>{{ code }}</strong>
+        <strong>Código da criança:</strong> <code style="font-size: 1.2rem; font-weight: bold;">{{ code }}</code>
         <p><em>Guarde este código. Por segurança, não ficará visível novamente.</em></p>
       </div>
     {% endif %}
   {% endif %}
 
   {% if error %}
-    <div class="error">{{ error }}</div>
+    <div class="flash-message error">
+      ⚠ {{ error }}
+    </div>
   {% endif %}
 
-  <form hx-post="/occurrences/{{ occurrence.id }}/checkin" hx-target="this" hx-swap="outerHTML">
-    <div class="form-group">
-      <label>Participante:
-        <select name="participant_id" required>
-          {% for p in participants %}
-            <option value="{{ p.id }}">{{ p.full_name }} ({{ p.birth_date.strftime('%d/%m/%Y') }})</option>
-          {% endfor %}
-        </select>
-      </label>
+  {% if already_checked_in %}
+    <div class="flash-message warning">
+      ℹ {{ participant.full_name }} já fez check-in neste evento. Atualizando informações...
     </div>
-    <div class="form-actions">
-      <button type="submit" class="btn-primary">Check-in</button>
+  {% endif %}
+
+  <!-- Search Section -->
+  <div class="form-group">
+    <label for="participant-search">Buscar Participante:</label>
+    <input 
+      type="text" 
+      id="participant-search" 
+      name="search"
+      placeholder="Nome ou últimos 4 dígitos do celular"
+      hx-get="/occurrences/{{ occurrence.id }}/search-participants"
+      hx-trigger="keyup changed delay:300ms"
+      hx-target="#search-results"
+      hx-swap="innerHTML"
+      autocomplete="off"
+      class="form-control"
+    />
+    <small style="color: #6c757d; margin-top: 0.25rem;">Digite pelo menos 2 caracteres</small>
+  </div>
+
+  <!-- Search Results -->
+  <div id="search-results">
+    <!-- Results populated by HTMX -->
+  </div>
+
+  <!-- Check-in Action Section (hidden until participant selected) -->
+  <div id="checkin-section" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e9ecef;">
+    <div class="list-card" id="selected-participant-info" style="margin-bottom: 1rem;">
+      <!-- Participant info populated by HTMX -->
     </div>
-  </form>
+
+    <form hx-post="/occurrences/{{ occurrence.id }}/checkin" hx-target="this" hx-swap="outerHTML">
+      <input type="hidden" id="participant-id" name="participant_id" />
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">✓ Confirmar Check-in</button>
+        <button type="button" class="btn-secondary" onclick="resetCheckin()">✕ Cancelar</button>
+      </div>
+    </form>
+  </div>
 </div>
+
+<script>
+function selectParticipant(participantId, participantName, isAdult) {
+  document.getElementById('participant-id').value = participantId;
+  
+  const badge = isAdult 
+    ? '<span class="list-type adult">Adulto</span>' 
+    : '<span class="list-type kid">Criança</span>';
+  
+  document.getElementById('selected-participant-info').innerHTML = `
+    <h3>${participantName}</h3>
+    <div class="list-details">
+      ${badge}
+    </div>
+  `;
+  
+  document.getElementById('search-results').innerHTML = '';
+  document.getElementById('participant-search').value = '';
+  document.getElementById('checkin-section').style.display = 'block';
+}
+
+function resetCheckin() {
+  document.getElementById('participant-id').value = '';
+  document.getElementById('selected-participant-info').innerHTML = '';
+  document.getElementById('checkin-section').style.display = 'none';
+  document.getElementById('participant-search').value = '';
+  document.getElementById('search-results').innerHTML = '';
+}
+</script>
 {% endblock %}

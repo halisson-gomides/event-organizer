@@ -10,7 +10,7 @@
   {% if occurrences %}
     <div class="list-grid">
       {% for occ in occurrences %}
-        <div class="list-card">
+        <div class="list-card {{ occ.status }}">
           <div class="list-info">
             <h3>{{ occ.event.name }}</h3>
             
@@ -41,7 +41,7 @@
               <div><strong>Fim:</strong> {{ occ.end_at|to_local_time }}</div>
               
               {% if occ.checkin_window %}
-              <div style="background-color: #e8f5e9; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem;">
+              <div style="background-color: #e8eaeb; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem;">
                 <strong>🕐 Janela de Check-in:</strong>
                 <div>Abre: {{ occ.checkin_window.open|to_local_time }}</div>
                 <div>Fecha: {{ occ.checkin_window.close|to_local_time }}</div>
@@ -49,7 +49,7 @@
               {% endif %}
               
               {% if occ.checkout_window %}
-              <div style="background-color: #e3f2fd; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem;">
+              <div style="background-color: #cdcecf; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem;">
                 <strong>🕐 Janela de Check-out:</strong>
                 <div>Abre: {{ occ.checkout_window.open|to_local_time }}</div>
                 <div>Fecha: {{ occ.checkout_window.close|to_local_time }}</div>

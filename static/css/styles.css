@@ -285,7 +285,7 @@ a:focus {
 
 .btn-primary {
     background: linear-gradient(180deg, #f8f9fa, #d2d4d6);
-    color: #23bbed;
+    color: #3f51b5;
     padding: 0.75rem 1.5rem;
     border-radius: 6px;
     font-size: 1rem;
@@ -594,6 +594,11 @@ button:hover {
     transform: translateY(-2px);
 }
 
+.list-card.event_ended {
+    opacity: 0.5;         /* Visually indicates a disabled state by dimming the content */
+    cursor: not-allowed;
+}
+
 .list-card h3 {
     margin: 0 0 1rem 0;
     color: #2c3e50;
@@ -659,6 +664,24 @@ button:hover {
     border: 1px solid #c3e6cb;
 }
 
+.list-type.event_ended {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.list-type.checkin_available{
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.list-type.checkout_available{
+    background-color: #e6d4ed;
+    color: #3d1557;
+    border: 1px solid #dcc3e6;
+}
+
 .list-card .list-type.rejected {
     background-color: #f8d7da;
     color: #721c24;
@@ -711,6 +734,55 @@ button:hover {
 .btn-danger:hover {
     background: linear-gradient(135deg, #c82333, #bd2130);
     transform: translateY(-1px);
+}
+
+.btn-logout {
+    background: #fff;
+    border: 1px solid #bc2a8d;
+    position: relative;
+    width: 4.2em;
+    height: 2em;
+    transition: 0.5s;
+    font-size: 17px;
+    border-radius: 0.4em;
+}
+
+.btn-logout p {
+    position: absolute;
+    top: 0.45em;
+    left: 1.2em;
+    margin: 0;
+    padding: 0;
+    transition: .5s;
+    color: #bc2a8d;
+}
+
+.btn-logout img {
+    position: absolute;
+    top: 0.5em;
+    right: 0.3em;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+    transition: 0.5s;
+    height: 1em;
+    fill: #fff
+}
+
+.btn-logout:hover p {
+    left: 0.6em;
+    color: #fff
+}
+
+.btn-logout:hover img {
+    opacity: 1;
+}
+
+.btn-logout:hover {
+    border-radius: 0.4em;
+    border: 1px solid #bc2a8d;
+    transform: none;
+    background: #bc2a8d;
 }
 
 /* Form Container */

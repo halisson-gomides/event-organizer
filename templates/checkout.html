@@ -3,7 +3,7 @@
 {% block content %}
 <h2>Checkout — {{ occurrence.start_at|to_local_time }} a {{ occurrence.end_at|to_local_time }}</h2>
 
-<div class="checkout-form">
+<div class="form-container">
   {% if checkout_ok %}
     <div class="ok">Checkout realizado com sucesso.</div>
   {% endif %}
@@ -26,7 +26,7 @@
       <label>Quem está realizando o checkout:
         <select name="checkout_by_participant_id" required>
           {% for p in participants %}
-            <option value="{{ p.id }}">{{ p.full_name }} ({{ p.birth_date|date:'d/m/Y' }})</option>
+            <option value="{{ p.id }}">{{ p.full_name }} ({{ p.birth_date.strftime('%d/%m/%Y') }})</option>
           {% endfor %}
         </select>
       </label>
@@ -35,7 +35,7 @@
       <label>Código (exigido para crianças): <input type="text" name="code"></label>
     </div>
     <div class="form-actions">
-      <button type="submit" class="btn-primary">Checkout</button>
+      <button type="submit">✔️ Checkout</button>
     </div>
   </form>
 </div>

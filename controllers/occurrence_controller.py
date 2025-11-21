@@ -160,8 +160,8 @@ class OccurrenceController(Controller):
         
         try:
             # Sort occurrences by start_at descending (most recent first)
-            from sqlalchemy import desc
-            occurrences, _ = await occurrences_service.list_and_count(order_by=[desc(EventOccurrenceModel.start_at)])
+            from sqlalchemy import asc
+            occurrences, _ = await occurrences_service.list_and_count(order_by=[asc(EventOccurrenceModel.start_at)])
             
             # Add status information to each occurrence
             occurrences_with_status = []
@@ -250,7 +250,63 @@ class OccurrenceController(Controller):
                 "code": None
             }
             return HTMXTemplate(template_name="checkin.html", context=context)
-    
+        
+
+    @get(path="/{occurrence_id:int}/search-participants", sync_to_thread=False)
+    async def search_participants(
+        self,
+        request: Request,
+        occurrences_service: OccurrenceService,
+        participants_service: ParticipantService,
+        attendance_service: AttendanceService,
+        occurrence_id: int = Parameter(
+            title="Occurrence ID",
+            description="The occurrence for check-in.",
+        ),
+        search: str = "",
+    ) -> Template:
+        """Search participants by name or phone digits."""
+
+        require_profiles(request, ["admin", "organizer", "volunteer"])
+
+        base_context = await self._get_base_context(occurrence_id, occurrences_service, participants_service)
+        occurrence = base_context["occurrence"]
+        if not occurrence:
+            return Template("checkin_search_result.html", context={
+                "participants": [],
+                "search_query": search,
+            })
+
+        # Get all participants
+        if search and len(search) >= 2:
+            # Search by name or last 4 phone digits
+            search_lower = search.lower()
+
+            participants_list = base_context["participants"]
+
+            # Filter by name or phone
+            filtered = [
+                p for p in participants_list
+                if (search_lower in p.full_name.lower() or
+                    (p.phone and search in p.phone[-4:]))
+            ]
+
+            # Check which ones already did checkin
+            from datetime import date
+
+            for participant in filtered:
+                existing_attendance = await attendance_service.get_by_occurrence_and_participant(occurrence_id, participant.id)
+                participant.already_checked_in = existing_attendance is not None
+                participant.is_adult = participant.age_on(date.today()) >= 18
+        else:
+            filtered = []
+
+        return Template("checkin_search_result.html", context={
+            "participants": filtered,
+            "search_query": search,
+            "occurrence": occurrence,
+        })
+
 
     @post(path="/{occurrence_id:int}/checkin")
     async def checkin(

@@ -1,0 +1,50 @@
+{% if search_query and search_query|length >= 2 %}
+  {% if participants %}
+    <div style="margin-top: 1rem;">
+      <h4 style="margin-bottom: 1rem; color: #495057;">Resultados da busca ({{ participants|length }})</h4>
+      <div class="list-grid" style="grid-template-columns: 1fr;">
+        {% for participant in participants %}
+          <div class="list-card" style="cursor: pointer; transition: all 0.2s;" 
+               onclick="selectParticipant({{ participant.id }}, '{{ participant.full_name }}', {{ participant.is_adult|lower }})">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+              <div>
+                <h3 style="margin: 0 0 0.5rem 0;">{{ participant.full_name }}</h3>
+                <div class="list-details">
+                  <div>📱 {{ participant.phone or 'Sem Telefone' }}</div>
+                  <div>🎂 {{ participant.birth_date.strftime('%d/%m/%Y') }}</div>
+                  <div>👤 Responsável: {{ participant.guardian_id }}</div>
+                  {% if participant.guardian %}
+                    <div>👤 Responsável: {{ participant.guardian.full_name }}</div>
+                  {% endif %}
+                </div>
+              </div>
+              <div>
+                {% if participant.is_adult %}
+                  <span class="list-type adult">Adulto</span>
+                {% else %}
+                  <span class="list-type kid">Criança</span>
+                {% endif %}
+              </div>
+            </div>
+            
+            {% if participant.already_checked_in %}
+              <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e9ecef;">
+                <div class="flash-message warning" style="margin: 0; font-size: 0.9rem;">
+                  ℹ Já fez check-in neste evento
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <div class="empty-state" style="margin-top: 1rem;">
+      <p>Nenhum participante encontrado com: <strong>"{{ search_query }}"</strong></p>
+    </div>
+  {% endif %}
+{% elif search_query and search_query|length < 2 %}
+  <div class="flash-message info" style="margin-top: 1rem;">
+    ℹ Digite pelo menos 2 caracteres para buscar
+  </div>
+{% endif %}

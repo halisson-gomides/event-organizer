@@ -17,9 +17,9 @@
     {% if request.session.get('user_id') %}
     <div style="padding: 0.5rem 1rem;">
       {{ request.session.get('username') }}
-       <form style="display: inline;" hx-post="/auth/logout" hx-target="body" hx-swap="outerHTML"><button type="submit" class="btn-small" 
-        style="background: #e5a7a73b; padding: 0.2rem 0.8rem; cursor: pointer; border-color: coral; margin-left: 0.8rem;">
-        🚪 Sair</button></form>
+       <form style="display: inline;" hx-post="/auth/logout" hx-target="body" hx-swap="outerHTML">
+        <button type="submit" class="btn-logout"><p>Sair</p><img src="/static/img/log-out_18984191.png"/></button>
+      </form>
     </div>
     {% endif %}
     <nav>
